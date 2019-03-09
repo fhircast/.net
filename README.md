@@ -1,10 +1,14 @@
-# Proposal for FHIRCast Websockets Prototype
+# FHIRCast Websockets Prototype
 
 ## Summary
 
 This document proposes the specifications to be followed by those parties wishing to participate in a collaborative FHIRCast/WebSocket Integration prototype. Participants can implement either/or a FHIRCast client and FHIRCast Hub. This specification also includes a proposed implement of authentication and "topic generation" which is not something currently included in the FHIRCast specification.
 
 The proposed specification will adhere to the [current FHIRCast specifications](http://fhircast.org/), and the [proposed Websocket specifications](https://github.com/fhircast/docs/pull/57/commits/2cc6c907cdeb7e69369bd58f8af9b00a896f9633?short_path=1a523bd#diff-1a523bd9fa0dbf998008b37579210e12) in all cases, unless otherwise specified herein. All communication from client to server will conform to WebSub and FHIRCast RESTful API specifications. Only Hub notifications to the client will be over Websockets.
+
+This project contains a working FHIRCast Hub and client which follows the proposal herein. The Hub is implemented as a Microsoft .Net Core 2.1 console app. The test client is a .Net Freamework 4.6.1 Web Forms application. 
+
+The authorization used is custom - it follows no standard. It is most likely a temporary solution for purposes of a working prototype. OAuth2 and other can be used as authorization/authentication is not part of the current FHIRCast specification, other than it must be provided in order to create a suitable topic for subscribing clients. 
 
 ## FHIRCast Hub
 
