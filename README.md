@@ -14,7 +14,7 @@ The authorization used is custom - it follows no standard. It is most likely a t
 
 The Hub will provide APIs that allow FHIRCast clients that share context with it to subscribe to imaging study events, and to notify other clients (publish) the same imaging study events. Per the FHIRCast specification, these events are named, but we will support a limited set at this time:
 
-- pen-imaging-study
+- open-imaging-study
 - switch-imaging-study
 - close-imaging-study
 - user-logout
