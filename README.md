@@ -37,15 +37,15 @@ From a customer implementation perspective, configuring and maintaining password
 ### GetTopic REST Method
 
 The hub SHALL implement a REST method using the base URL and "GetTopic" as the endpoint to authenticate and authorize the client, and return to it a topic (session id). Example:
-
-GET https://hub.example.com/gettopic?username=joe&amp;secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
-
+```
+GET https://hub.example.com/gettopic?username=joe&secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
+```
 In this example, based on the sample data from above, the topic "1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7" would be returned along with a status code of 200 (or any other valid 200s code).
 
 If I launch another client, I can authenticate using:
-
-GET https://hub.example.com/authenticate?username=joe2&amp;secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
-
+```
+GET https://hub.example.com/authenticate?username=joe2&secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
+```
 And receive the same topic as I did for user "joe", who is connecting from a different client application.
 
 ### Subscribe REST Method
