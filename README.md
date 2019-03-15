@@ -152,7 +152,7 @@ The FHIRCast WebSocket client will attempt to connect to the hub after:
 
 The hub will listen for the connection on the base URL, using an endpoint containing the topic. Example (client to hub):
 
-wss:_//hub.example.com/__1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7_
+wss://hub.example.com/1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7_
 
 Example Response (hub to client):
 ```json
