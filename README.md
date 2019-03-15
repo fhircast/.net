@@ -61,11 +61,11 @@ Content-Type: application/x-www-form-urlencoded
 
 hub.topic=1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7
 
-&amp;hub.events=open-imaging-study,close-imaging-study,switch-imaging-study,user-logout
+&hub.events=open-imaging-study,close-imaging-study,switch-imaging-study,user-logout
 
-&amp;hub.mode=subscribe
+&hub.mode=subscribe
 
-&amp;hub.channel.type=websocket
+&hub.channel.type=websocket
 ```
 
 Notes:
