@@ -63,6 +63,7 @@ namespace dotnet.FHIR.hub.Controllers
 				catch (Exception ex)
 				{
 					this.logger.LogError($"Exception in Connect:\r\n{ex.ToString()}");
+					return null;
 				}
 				if (client.Tables.Count > 0 && client.Tables[0].Rows.Count > 0)
 				{
@@ -71,11 +72,11 @@ namespace dotnet.FHIR.hub.Controllers
 					string firstName = row["FirstName"].ToString();
 					string lastName = row["LastName"].ToString();
 					string appName = row["AppName"].ToString();
-					this.logger.LogInformation($"Connected: app name:'{appName}', user:'{firstName} {lastName}, topic:'{topic}'");
+					this.logger.LogInformation($"User validated successfully: app name:'{appName}', user:'{firstName} {lastName}, topic:'{topic}'");
 				}
 				else
 				{
-					this.logger.LogInformation($"username/secret did not valildate; returning null topic");
+					this.logger.LogInformation($"{username}/{secret} did not valildate; returning null topic");
 				}
 			}
 			return topic;
@@ -84,6 +85,7 @@ namespace dotnet.FHIR.hub.Controllers
 		[HttpPost]
 		public IActionResult Subscribe([FromForm] Subscription hub)
 		{
+			this.logger.LogDebug($"Subscribe...");
 			Subscription sub = new Subscription();
 			sub.Callback = Request.Form["hub.callback"];
 			sub.Channel = new Channel();
@@ -92,7 +94,7 @@ namespace dotnet.FHIR.hub.Controllers
 			sub.Mode = Request.Form["hub.mode"];
 			sub.Secret = Request.Form["hub.secret"];
 			sub.Topic = Request.Form["hub.topic"];
-			this.logger.LogDebug($"Subscribe - subscription:{Environment.NewLine}{sub}");
+			this.logger.LogDebug($"Subscribe; subscription:{Environment.NewLine}{sub}");
 			if (null == sub.Channel)
 			{
 				sub.Channel = new Channel() { Type = ChannelType.Rest };
@@ -115,6 +117,7 @@ namespace dotnet.FHIR.hub.Controllers
 			}
 			else
 			{
+				this.logger.LogDebug($"Enqueuing background job to perform callback...");
 				this.backgroundJobClient.Enqueue<ValidateSubscriptionJob>(job => job.Run(sub));
 				return this.Accepted();
 			}
@@ -127,13 +130,20 @@ namespace dotnet.FHIR.hub.Controllers
 		[HttpGet]
 		public IEnumerable<Subscription> GetSubscriptions()
 		{
-			return this.subscriptions.GetActiveSubscriptions();
+			this.logger.LogDebug($"Default method: GetSubscriptions...");
+			ICollection<Subscription> subs = this.subscriptions.GetActiveSubscriptions();
+			this.logger.LogInformation($"{subs.Count} active subscriptions found.");
+			foreach(Subscription sub in subs)
+			{
+				this.logger.LogDebug($"Subscription:\r\n\t{sub}");
+			}
+			return subs;
 		}
 
 		[HttpPost("{topic}")]
 		public async Task<IActionResult> Notify(string topic, [FromBody] Notification notification)
 		{
-			this.logger.LogInformation($"Got notification from client: {notification}");
+			this.logger.LogInformation($"Received notification from client: {notification}");
 			var subscriptions = this.subscriptions.GetSubscriptions(notification.Event.Topic, notification.Event.HubEvent);
 			this.logger.LogDebug($"Found {subscriptions.Count} subscriptions matching client event");
 

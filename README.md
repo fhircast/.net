@@ -14,7 +14,7 @@ The authorization used is custom - it follows no standard. It is most likely a t
 
 The Hub will provide APIs that allow FHIRCast clients that share context with it to subscribe to imaging study events, and to notify other clients (publish) the same imaging study events. Per the FHIRCast specification, these events are named, but we will support a limited set at this time:
 
-- open-imaging-study
+- pen-imaging-study
 - switch-imaging-study
 - close-imaging-study
 - user-logout
@@ -37,22 +37,21 @@ From a customer implementation perspective, configuring and maintaining password
 ### GetTopic REST Method
 
 The hub SHALL implement a REST method using the base URL and "GetTopic" as the endpoint to authenticate and authorize the client, and return to it a topic (session id). Example:
-```
-GET https://hub.example.com/gettopic?username=joe&secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
-```
+
+GET https://hub.example.com/gettopic?username=joe&amp;secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
+
 In this example, based on the sample data from above, the topic "1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7" would be returned along with a status code of 200 (or any other valid 200s code).
 
 If I launch another client, I can authenticate using:
-```
-GET https://hub.example.com/authenticate?username=joe2&secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
-```
+
+GET https://hub.example.com/authenticate?username=joe2&amp;secret=61B584A8-C5AD-4A87-A40F-19E448EEBBAD
+
 And receive the same topic as I did for user "joe", who is connecting from a different client application.
 
 ### Subscribe REST Method
 
 The hub SHALL implement a REST method using the base URL as the endpoint. The specification conforms to WebSub specifications. The client will use the topic returned during authentication. Example:
 
-```
 POST https://hub.example.com
 
 Authorization: Bearer 61B584A8-C5AD-4A87-A40F-19E448EEBBAD
@@ -61,12 +60,11 @@ Content-Type: application/x-www-form-urlencoded
 
 hub.topic=1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7
 
-&hub.events=open-imaging-study,close-imaging-study,switch-imaging-study,user-logout
+&amp;hub.events=open-imaging-study,close-imaging-study,switch-imaging-study,user-logout
 
-&hub.mode=subscribe
+&amp;hub.mode=subscribe
 
-&hub.channel.type=websocket
-```
+&amp;hub.channel.type=websocket
 
 Notes:
 
@@ -85,63 +83,108 @@ Two encompassing objects will be used:
 4. The response message from the hub will contain one object containing the status, status – no header or body differentiation (see example below)
 
 Example Notification (Hub to client):
-```json
-{
-  "header": {
-    "Authorization": "Bearer 61B584A8-C5AD-4A87-A40F-19E448EEBBAD"
-  },
-  "body": {
-    "timestamp": "2018-01-08T01:40:05.14",
-    "id": "wYXStHqxFQyHFELh",
-    "event": {
-      "hub.topic": "1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7",
-      "hub.event": "close-imaging-study",
-      "context": [
-        {
-          "key": "patient",
-          "resource": {
-            "resourceType": "Patient",
-            "id": "ewUbXT9RWEbSj5wPEdgRaBw3",
-            "identifier": [
-              {
-                "system": "urn:MRN",
-                "value": "2667"
-              }
-            ]
-          }
-        },
-        {
-          "key": "study",
-          "resource": {
-            "resourceType": "ImagingStudy",
-            "id": "8i7tbu6fby5ftfbku6fniuf",
-            "uid": "urn:oid:2.16.124.113543.6003.1154777499.30246.19789.3503430045",
-            "identifier": [
-              {
-                "system": "urn:accession",
 
-                "value": "185444"
-              }
-            ],
-            "patient": {
-              "reference": "Patient/ewUbXT9RWEbSj5wPEdgRaBw3"
-            }
+"header":
+
+{
+
+"Authorization": "Bearer 61B584A8-C5AD-4A87-A40F-19E448EEBBAD",
+
+},
+
+"body":
+
+{
+
+  "timestamp": "2018-01-08T01:40:05.14",
+
+  "id": "wYXStHqxFQyHFELh",
+
+  "event": {
+
+    "hub.topic": "1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7",
+
+    "hub.event": "close-imaging-study",
+
+    "context":
+
+[
+
+{
+
+      "key": "patient",
+
+      "resource": {
+
+        "resourceType": "Patient",
+
+        "id": "ewUbXT9RWEbSj5wPEdgRaBw3",
+
+        "identifier": [
+
+          {
+
+            "system": "urn:MRN",
+
+            "value": "2667"
+
           }
+
+        ]
+
+      }
+
+    },
+
+    {
+
+      "key": "study",
+
+      "resource": {
+
+        "resourceType": "ImagingStudy",
+
+        "id": "8i7tbu6fby5ftfbku6fniuf",
+
+        "uid": "urn:oid:2.16.124.113543.6003.1154777499.30246.19789.3503430045",
+
+        "identifier": [
+
+          {
+
+            "system": "urn:accession",
+
+            "value": "185444"
+
+          }
+
+        ],
+
+        "patient": {
+
+          "reference": "Patient/ewUbXT9RWEbSj5wPEdgRaBw3"
+
         }
-      ]
+
+      }
+
     }
+
   }
-}
-```
+
+]
 
 Example Hub response:
-```json
+
 {
-  "timestamp": "2018-01-08T01:40:05.14",
-  "status": "OK",
-  "statusCode": "200"
+
+"timestamp": "2018-01-08T01:40:05.14",
+
+"status": "OK",
+
+"statusCode": "200",
+
 }
-```
 
 ### Establishing the WebSocket Connection
 
@@ -152,16 +195,19 @@ The FHIRCast WebSocket client will attempt to connect to the hub after:
 
 The hub will listen for the connection on the base URL, using an endpoint containing the topic. Example (client to hub):
 
-wss://hub.example.com/1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7_
+wss:_//hub.example.com/__1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7_
 
 Example Response (hub to client):
-```json
+
 {
-  "timestamp": "2018-01-08T01:40:05.14",
-  "status": "OK",
-  "statusCode": "200"
+
+"timestamp": "2018-01-08T01:40:05.14",
+
+"status": "OK",
+
+"statusCode": "200",
+
 }
-```
 
 ### Get Current Context
 
@@ -172,13 +218,21 @@ GET https://hub.example.com/1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7
 Authorization: Bearer 61B584A8-C5AD-4A87-A40F-19E448EEBBAD
 
  Potential response (context is a key/value array of FHIR Resources):
-```json 
+
 {
+
    "timestamp":"2018-01-08T01:40:05.14",
+
    "id":"wYXStHqxFQyHFELh",
+
    "event":{
+
       "hub.topic":"_1A3DF21C-1451-4DC5-8B59-3F824D3A7ED7_",
-      "context":[]
+
+      "context":[
+
+]
+
    }
+
 }
-```

@@ -103,12 +103,16 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "id")]
 		public string Id { get; set; }
 
-		[JsonProperty(PropertyName = "hub.boundid")]
-		public string BoundID { get; set; }
-
 		[JsonProperty(PropertyName = "event")]
 		public NotificationEvent Event { get; set; }
+
+		[JsonProperty(PropertyName = "status")]
+		public string Status { get; set; }
+
+		[JsonProperty(PropertyName = "statuscode")]
+		public int StatusCode { get; set; }
 	}
+
 	public sealed class WebSocketResponse : ModelBase
 	{
 		[JsonProperty(PropertyName = "timestamp")]
@@ -120,7 +124,8 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "statuscode")]
 		public int StatusCode { get; set; }
 	}
-	public class WebSocketConnection
+
+	public class WebSocketConnection : ModelBase
 	{
 		public WebSocketConnection(DateTime timeStamp, string topic, System.Net.WebSockets.WebSocket ws)
 		{
@@ -133,7 +138,7 @@ namespace dotnet.FHIR.common
 		public System.Net.WebSockets.WebSocket WebSocket;
 	}
 
-	public sealed class NotificationEvent
+	public sealed class NotificationEvent : ModelBase
 	{
 		[JsonProperty(PropertyName = "hub.topic")]
 		public string Topic { get; set; }
@@ -145,7 +150,7 @@ namespace dotnet.FHIR.common
 		public Context[] Contexts { get; set; }
 	}
 
-	public sealed class Context
+	public sealed class Context : ModelBase
 	{
 		[JsonProperty(PropertyName = "key")]
 		public string Key { get; set; }
@@ -156,7 +161,7 @@ namespace dotnet.FHIR.common
 
 	// Can be a Patient Resource or ImagingStudy resource
 	// TODO: create subclasses?
-	public sealed class Resource
+	public sealed class Resource : ModelBase
 	{
 		[JsonProperty(PropertyName = "resourceType")]
 		public string ResourceType { get; set; }
@@ -177,7 +182,7 @@ namespace dotnet.FHIR.common
 		public Identifier Accession { get; set; }
 	}
 
-	public class Identifier
+	public class Identifier : ModelBase
 	{
 		[JsonProperty(PropertyName = "use")]
 		public string Use { get; set; }
@@ -192,7 +197,7 @@ namespace dotnet.FHIR.common
 		public string Value { get; set; }
 	}
 
-	public sealed class CodeableConcept
+	public sealed class CodeableConcept : ModelBase
 	{
 		[JsonProperty(PropertyName = "coding")]
 		public Coding Coding;
@@ -201,7 +206,7 @@ namespace dotnet.FHIR.common
 		public Coding Text;
 	}
 
-	public sealed class Coding
+	public sealed class Coding : ModelBase
 	{
 		[JsonProperty(PropertyName = "system")]
 		public string system { get; set; }
@@ -219,7 +224,7 @@ namespace dotnet.FHIR.common
 		public bool UserSelected { get; set; }
 	}
 
-	public sealed class ResourceReference
+	public sealed class ResourceReference : ModelBase
 	{
 		[JsonProperty(PropertyName = "reference")]
 		public string Reference { get; set; }

@@ -70,8 +70,13 @@ namespace dotnet.FHIR.app
 			{
 				response = await client.SendAsync(request);
 				_topic = await response.Content.ReadAsStringAsync();
+				if (String.IsNullOrEmpty(_topic))
+				{
+					Log($"Validation failed for username: {txtUserName.Text}, secret: {txtSecret.Text}");
+					return;
+				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Log($"Exception occurred getting topic:\r\n{ex.ToString()}");
 				return;
@@ -222,6 +227,7 @@ namespace dotnet.FHIR.app
 			string json = notification.ToString();
 			byte[] bytes = Encoding.ASCII.GetBytes(json);
 			await _ws.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+			//TODO: process acknowledgement response
 		}
 
 		#endregion
@@ -234,22 +240,30 @@ namespace dotnet.FHIR.app
 			btnSubscribe.Text = "Subscribe";
 		}
 
+		/// <summary>
+		/// Thread that reads messages from each websocket connect
+		/// BIG TODO: process acknowledgements by using some sort of notification queue 
+		/// of outbound notifications
+		/// </summary>
+		/// <param name="sender">TODO: this needs to contain something that will identify the websocket
+		/// in order to handle acknowledgements and take the notification off the queue.</param>
+		/// <param name="e"></param>
 		private async void webSocketReader_DoWork(object sender, DoWorkEventArgs e)
 		{
 			Log("Websocket reader starting...");
 			while (true)
 			{
-				string response = null;
+				string socketData = null;
 				try
 				{
-					response = await ReceiveStringAsync(_ws, CancellationToken.None);
+					socketData = await ReceiveStringAsync(_ws, CancellationToken.None);
 				}
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine(ex.ToString());
 					Log("Exception occurred reading websocket:\r\n" + ex.Message);
 				}
-				if (string.IsNullOrEmpty(response))
+				if (string.IsNullOrEmpty(socketData))
 				{
 					if (_ws.State != WebSocketState.Open)
 					{
@@ -261,19 +275,35 @@ namespace dotnet.FHIR.app
 					}
 					continue;
 				}
-				// all data should be in json format
-				Notification notification = JsonConvert.DeserializeObject<Notification>(response);
+				// it's either an acknowledgement or an event notification...
+				// it's either an acknowledgement or an event notification...
+				Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
 				if (null != notification.Event)
 				{
-					Log("Notification received:\r\n " + notification.ToString());
+					Log($"Event notification received:\r\n{notification.Event}");
+					// send success response to client
+					WebSocketResponse wsResponse = new WebSocketResponse
+					{
+						Timestamp = DateTime.Now,
+						Status = "OK",
+						StatusCode = 200
+					};
+					await SendStringAsync(_ws, wsResponse.ToString());
 				}
-				else if (null != notification.BoundID)
+				else if (null != notification.Status)
 				{
-					Log("Connection bind confirmation id:\r\n " + notification.BoundID);
+					Log($"Acknowledgement response received:\r\n{notification.Status} ({notification.StatusCode})");
 				}
 				else
 				{
-					Log($"Invalid message received:\r\n{response}");
+					Log($"Unexpected websocket message received:\r\n{socketData}");
+					WebSocketResponse wsResponse = new WebSocketResponse
+					{
+						Timestamp = DateTime.Now,
+						Status = "FAIL",
+						StatusCode = 400
+					};
+					await SendStringAsync(_ws, wsResponse.ToString());
 				}
 			}
 			Log("Websocket reader terminated.");
@@ -329,11 +359,6 @@ namespace dotnet.FHIR.app
 			}
 			else
 				txtLog.Text += DateTime.Now.ToString("G") + "\t" + message + "\r\n";
-		}
-
-		private void groupBox1_Enter(object sender, EventArgs e)
-		{
-
 		}
 	}
 }
