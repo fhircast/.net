@@ -30,6 +30,14 @@ namespace dotnet.FHIR.hub
 			this.connections = connections;
 		}
 
+		/// <summary>
+		/// Webservice thread that reads messages from each websocket connect
+		/// BIG TODO: process acknowledgements by using some sort of notification queue 
+		/// of outbound notifications.
+		/// </summary>
+		/// <param name="sender">TODO: this needs to contain something that will identify the websocket
+		/// in order to handle acknowledgements and take the notification off the queue.</param>
+		/// <param name="e"></param>
 		public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 		{
 			if (!context.WebSockets.IsWebSocketRequest)
@@ -47,11 +55,13 @@ namespace dotnet.FHIR.hub
 					// accept socket request
 					ws = await context.WebSockets.AcceptWebSocketAsync();
 					string topic = args[0];
+					this.logger.LogDebug($"Websocket connection requested; topic:{topic}.");
 					// validate topic, and get user name from the database configuration
 					//TODO
 					bool validated = true;
 					if (!validated)
 					{
+						this.logger.LogInformation("Topic not validated. Message rejected.");
 						WebSocketResponse response = new WebSocketResponse
 						{
 							Timestamp = DateTime.Now,
@@ -62,15 +72,7 @@ namespace dotnet.FHIR.hub
 					}
 					else
 					{
-						string[] logMessage =
-							{
-							"Accepted websocket request:",
-							$"	Topic '{topic}'",
-							$"	IP: {context.Connection.RemoteIpAddress.ToString()}",
-							$"	Port:{context.Connection.RemotePort}"
-							//$"	User name:{xxx}"
-						};
-						this.logger.LogInformation(String.Join("\r\n", logMessage));
+						this.logger.LogInformation($"Accepted websocket request: Topic {topic}, IP: {context.Connection.RemoteIpAddress.ToString()}:{context.Connection.RemotePort}");
 						// store this websocket connection in our dictionary
 						this.connections.AddConnection(topic, ws);
 						// send success response to client
@@ -85,19 +87,37 @@ namespace dotnet.FHIR.hub
 						// each message sent by the client
 						while (true)
 						{
-							if (ct.IsCancellationRequested)
-								break;
-							string socketData = await ReceiveStringAsync(ws, ct);
+							string socketData = null;
+							try
+							{
+								socketData = await ReceiveStringAsync(ws, ct);
+							}
+							catch(Exception ex)
+							{
+								this.logger.LogError($"Exception occurred reading from websocket:\r\n{ex.ToString()}");
+							}
 							if (string.IsNullOrEmpty(socketData))
 							{
 								if (ws.State != WebSocketState.Open)
+								{
+									this.logger.LogError($"The websocket connection on port {context.Connection.RemotePort} is closed. Terminating this subscription...");
 									break;
+								}
 								continue;
 							}
+							// it's either an acknowledgement or an event notification...
 							Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
 							if (null != notification.Event)
 							{
-								this.logger.LogInformation("Processing notification: " + notification.ToString());
+								this.logger.LogInformation($"Event notification received:\r\n{notification.Event.ToString()}");
+								// send success response to client
+								WebSocketResponse wsResponse = new WebSocketResponse
+								{
+									Timestamp = DateTime.Now,
+									Status = "OK",
+									StatusCode = 200
+								};
+								await SendStringAsync(ws, wsResponse.ToString());
 								// Forward notifications to Websocket connected subscribers
 								var subs = this.subscriptions.GetSubscriptions(notification.Event.Topic, notification.Event.HubEvent);
 								foreach (var sub in subs)
@@ -105,12 +125,17 @@ namespace dotnet.FHIR.hub
 									await this.notifications.SendNotification(notification, sub);
 								}
 							}
+							else if (null != notification.Status)
+							{
+								this.logger.LogInformation($"Acknowledgement response received:\r\n{notification.Status} ({notification.StatusCode})");
+							}
 							else
 							{
-								this.logger.LogError("Unexpected websocket message received: " + response);
+								this.logger.LogError($"Unexpected websocket message received:\r\n{response}");
 							}
 						}
 						await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", ct);
+						//TODO: remove subscription
 						ws.Dispose();
 					}
 				}

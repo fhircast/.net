@@ -11,6 +11,14 @@ namespace dotnet.FHIR.hub
 		public static void Main(string[] args)
 		{
 			BuildWebHost(args).Run();
+			//var host = new WebHostBuilder()
+			//	.UseKestrel()
+			//	.UseContentRoot(System.IO.Directory.GetCurrentDirectory())
+			//	.UseIISIntegration()
+			//	.UseStartup<Startup>()
+			//	.UseNLog()
+			//	.Build();
+			//host.Run();
 		}
 
 		public static IWebHost BuildWebHost(string[] args) =>
