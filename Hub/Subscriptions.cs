@@ -32,11 +32,6 @@ namespace dotnet.FHIR.hub
 				.ToArray();
 		}
 
-		//public Subscription GetSubscription(string callback)
-		//{
-		//	return this.subscriptions.Where(x => x.Callback == callback).First();
-		//}
-
 		public void AddSubscription(Subscription subscription)
 		{
 			this.logger.LogInformation($"Adding subscription {subscription}.");
@@ -47,7 +42,7 @@ namespace dotnet.FHIR.hub
 		{
 			this.logger.LogInformation($"Removing subscription {subscription}.");
 			this.subscriptions = this.subscriptions.Remove(subscription);
-			//TODO: disconnect and remove WS connection?
+			//TODO: disconnect and remove WS connection? Already being done by Hub
 		}
 	}
 }
