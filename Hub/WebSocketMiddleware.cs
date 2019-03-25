@@ -35,9 +35,6 @@ namespace dotnet.FHIR.hub
 		/// BIG TODO: process acknowledgements by using some sort of notification queue 
 		/// of outbound notifications.
 		/// </summary>
-		/// <param name="sender">TODO: this needs to contain something that will identify the websocket
-		/// in order to handle acknowledgements and take the notification off the queue.</param>
-		/// <param name="e"></param>
 		public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 		{
 			if (!context.WebSockets.IsWebSocketRequest)
@@ -47,6 +44,7 @@ namespace dotnet.FHIR.hub
 			else
 			{
 				string path = context.Request.Path.Value;
+				string socketAddress = $"{context.Connection.RemoteIpAddress.ToString()}/{context.Connection.RemotePort}";
 				string[] args = String.IsNullOrEmpty(path) ? null : path.TrimStart('/').Split('/');
 				CancellationToken ct = context.RequestAborted;
 				WebSocket ws = null;
@@ -55,7 +53,7 @@ namespace dotnet.FHIR.hub
 					// accept socket request
 					ws = await context.WebSockets.AcceptWebSocketAsync();
 					string topic = args[0];
-					this.logger.LogDebug($"Websocket connection requested; topic:{topic}.");
+					this.logger.LogDebug($"Websocket connection requested from {socketAddress}; topic:{topic}.");
 					// validate topic, and get user name from the database configuration
 					//TODO
 					bool validated = true;
@@ -72,9 +70,9 @@ namespace dotnet.FHIR.hub
 					}
 					else
 					{
-						this.logger.LogInformation($"Accepted websocket request: Topic {topic}, IP: {context.Connection.RemoteIpAddress.ToString()}:{context.Connection.RemotePort}");
+						this.logger.LogInformation($"Accepted websocket request from {socketAddress}: Topic {topic}");
 						// store this websocket connection in our dictionary
-						this.connections.AddConnection(topic, ws);
+						this.connections.AddConnection(socketAddress, topic, ws);
 						// send success response to client
 						WebSocketResponse response = new WebSocketResponse
 						{
@@ -87,62 +85,61 @@ namespace dotnet.FHIR.hub
 						// each message sent by the client
 						while (true)
 						{
+							//TODO: have a semaphore or flag to stop loop
 							string socketData = null;
 							try
 							{
-								socketData = await ReceiveStringAsync(ws, ct);
+								socketData = await ReceiveStringAsync(ws, new CancellationToken());
 							}
-							catch(Exception ex)
+							catch (Exception ex)
 							{
-								this.logger.LogError($"Exception occurred reading from websocket:\r\n{ex.ToString()}");
+								this.logger.LogError($"Exception occurred reading from websocket at {socketAddress}:\r\n{ex.ToString()}");
 							}
 							if (string.IsNullOrEmpty(socketData))
 							{
-								if (ws.State != WebSocketState.Open)
-								{
-									this.logger.LogError($"The websocket connection on port {context.Connection.RemotePort} is closed. Terminating this subscription...");
-									break;
-								}
-								continue;
-							}
-							// it's either an acknowledgement or an event notification...
-							Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
-							if (null != notification.Event)
-							{
-								this.logger.LogInformation($"Event notification received:\r\n{notification.Event.ToString()}");
-								// send success response to client
-								WebSocketResponse wsResponse = new WebSocketResponse
-								{
-									Timestamp = DateTime.Now,
-									Status = "OK",
-									StatusCode = 200
-								};
-								await SendStringAsync(ws, wsResponse.ToString());
-								// Forward notifications to Websocket connected subscribers
-								var subs = this.subscriptions.GetSubscriptions(notification.Event.Topic, notification.Event.HubEvent);
-								foreach (var sub in subs)
-								{
-									await this.notifications.SendNotification(notification, sub);
-								}
-							}
-							else if (null != notification.Status)
-							{
-								this.logger.LogInformation($"Acknowledgement response received:\r\n{notification.Status} ({notification.StatusCode})");
+								this.logger.LogDebug($"The websocket connection at {socketAddress} closed.");
+								break;
 							}
 							else
 							{
-								this.logger.LogError($"Unexpected websocket message received:\r\n{response}");
+								// it's either an acknowledgement or an event notification...
+								Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
+								if (null != notification.Event)
+								{
+									this.logger.LogInformation($"Event notification received from {socketAddress}:\r\n{notification.Event.ToString()}");
+									// send success response to client
+									WebSocketResponse wsResponse = new WebSocketResponse
+									{
+										Timestamp = DateTime.Now,
+										Status = "OK",
+										StatusCode = 200
+									};
+									await SendStringAsync(ws, wsResponse.ToString());
+									// Forward notifications to Websocket connected subscribers
+									var subs = this.subscriptions.GetSubscriptions(notification.Event.Topic, notification.Event.HubEvent);
+									foreach (var sub in subs)
+									{
+										await this.notifications.SendNotification(notification, sub);
+									}
+								}
+								else if (null != notification.Status)
+								{
+									this.logger.LogInformation($"Acknowledgement response received from {socketAddress}:\r\n{notification.Status} ({notification.StatusCode})");
+								}
+								else
+								{
+									this.logger.LogError($"Unexpected websocket message received from {socketAddress}:\r\n{socketData}");
+								}
 							}
 						}
-						await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", ct);
-						//TODO: remove subscription
+						this.logger.LogDebug($"The websocket connection thread for {socketAddress} is terminating. Removing WebsocketConnection...");
+						if (null != ws && ws.State == WebSocketState.Open)
+							await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", new CancellationToken());
+						this.connections.RemoveConnection(socketAddress);
 						ws.Dispose();
 					}
 				}
-				else
-				{
-					await next(context);
-				}
+				this.logger.LogDebug("InvokeAsync returning.");
 			}
 		}
 

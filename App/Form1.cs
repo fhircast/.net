@@ -61,47 +61,73 @@ namespace dotnet.FHIR.app
 			Properties.Settings.Default.txtUserName = txtUserName.Text;
 			Properties.Settings.Default.txtSubEvents = txtSubEvents.Text;
 			Properties.Settings.Default.Save();
-			// get topic
-			HttpClient client = new HttpClient();
-			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/gettopic?username={txtUserName.Text}&secret={txtSecret.Text}");
-			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
-			HttpResponseMessage response;
-			try
+			if (btnSubscribe.Text == "Unsubscribe")
 			{
-				response = await client.SendAsync(request);
-				_topic = await response.Content.ReadAsStringAsync();
-				if (String.IsNullOrEmpty(_topic))
+				// Disconnect WebSocket
+				if (_ws.State == WebSocketState.Open)
 				{
-					Log($"Validation failed for username: {txtUserName.Text}, secret: {txtSecret.Text}");
+					try
+					{
+						ResetWebSocket();
+						webSocketReader.Dispose();
+						webSocketReader = new BackgroundWorker();
+					}
+					catch (Exception ex)
+					{
+						_ws.Dispose();
+						_ws = new ClientWebSocket();
+						MessageBox.Show(ex.ToString());
+						return;
+					}
+				}
+				else
+				{
+					Log("WARNING: The websocket was already disconnected. ");
+				}
+				btnSubscribe.Text = "Subscribe";
+				btnNotify.Enabled = false;
+			}
+			else 
+			{ 
+				// get topic
+				HttpClient client = new HttpClient();
+				UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/gettopic?username={txtUserName.Text}&secret={txtSecret.Text}");
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
+				HttpResponseMessage response;
+				try
+				{
+					response = await client.SendAsync(request);
+					_topic = await response.Content.ReadAsStringAsync();
+					if (String.IsNullOrEmpty(_topic))
+					{
+						Log($"Validation failed for username: {txtUserName.Text}, secret: {txtSecret.Text}");
+						return;
+					}
+				}
+				catch (Exception ex)
+				{
+					Log($"Exception occurred getting topic:\r\n{ex.ToString()}");
 					return;
 				}
-			}
-			catch (Exception ex)
-			{
-				Log($"Exception occurred getting topic:\r\n{ex.ToString()}");
-				return;
-			}
-			Log($"GetTopic response: {_topic}");
-			//Subscribe
-			urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
-			request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
-			request.Content = new FormUrlEncodedContent(
-				new Dictionary<string, string>
-				{
-					{ "hub.callback", "" },
-					{ "hub.channel.type", "websocket" },
-					{ "hub.mode", btnSubscribe.Text.ToLower() },
-					{ "hub.topic", _topic },
-					{ "hub.events", txtSubEvents.Text },
-					{ "hub.lease", "999" },
-					{ "hub.secret", "" }	// not to be confused with "app secret". This value isn't currently implementented on the Hub
-				}
-			);
-			response = await client.SendAsync(request);
-			string responseText = await response.Content.ReadAsStringAsync();
-			Log($"Subscription response: {responseText}");
-			if (btnSubscribe.Text == "Subscribe")
-			{
+				Log($"GetTopic response: {_topic}");
+				//Subscribe
+				urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
+				request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
+				request.Content = new FormUrlEncodedContent(
+					new Dictionary<string, string>
+					{
+						{ "hub.callback", "" },
+						{ "hub.channel.type", "websocket" },
+						{ "hub.mode", btnSubscribe.Text.ToLower() },
+						{ "hub.topic", _topic },
+						{ "hub.events", txtSubEvents.Text },
+						{ "hub.lease", "999" },
+						{ "hub.secret", "" }	// not to be confused with "app secret". This value isn't currently implementented on the Hub
+					}
+				);
+				response = await client.SendAsync(request);
+				string responseText = await response.Content.ReadAsStringAsync();
+				Log($"Subscription response: {responseText}");
 				// Connect to websocket
 				if (_ws.State != WebSocketState.Open)
 				{
@@ -135,32 +161,6 @@ namespace dotnet.FHIR.app
 					Log("WARNING: The websocket was already connected. ");
 				}
 				btnSubscribe.Text = "Unsubscribe";
-			}
-			else
-			{
-				// Disconnect WebSocket
-				if (_ws.State == WebSocketState.Open)
-				{
-					try
-					{
-						ResetWebSocket();
-						webSocketReader.Dispose();
-						webSocketReader = new BackgroundWorker();
-					}
-					catch (Exception ex)
-					{
-						_ws.Dispose();
-						_ws = new ClientWebSocket();
-						MessageBox.Show(ex.ToString());
-						return;
-					}
-				}
-				else
-				{
-					Log("WARNING: The websocket was already disconnected. ");
-				}
-				btnSubscribe.Text = "Subscribe";
-				btnNotify.Enabled = false;
 			}
 		}
 
@@ -236,8 +236,17 @@ namespace dotnet.FHIR.app
 		{
 			await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
 			Log("The websocket connection closed sucessfully.");
+			if (this.InvokeRequired)
+			{
+				this.btnSubscribe.Invoke((MethodInvoker)delegate
+				{
+					// Running on the UI thread
+					btnSubscribe.Text = "Subscribe";
+				});
+			}
+			else
+				btnSubscribe.Text = "Subscribe";
 			_ws = new ClientWebSocket();
-			btnSubscribe.Text = "Subscribe";
 		}
 
 		/// <summary>

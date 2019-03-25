@@ -37,7 +37,7 @@ namespace dotnet.FHIR.hub
 			else if (sub.Channel.Type == ChannelType.Websocket)
 			{
 				this.logger.LogInformation($"Sending notification {notification} to Websocket {sub.Channel. Endpoint}");
-				List<WebSocketConnection> connections = this.connections.GetConnections(sub.Topic);
+				List<WebSocket> connections = this.connections.GetTopicConnections(sub.Topic);
 				int conCount = connections.Count;
 				if (conCount == 0)
 				{
@@ -46,11 +46,11 @@ namespace dotnet.FHIR.hub
 				else
 				{
 					this.logger.LogInformation($"Sending notification {conCount} websockets...");
-					foreach (WebSocketConnection wsc in connections)
+					foreach (WebSocket ws in connections)
 					{
 						var buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(notification));
 						var segment = new ArraySegment<byte>(buffer);
-						await wsc.WebSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+						await ws.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
 						this.logger.LogInformation($"Notification sent successfully.");
 					}
 				}

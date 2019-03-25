@@ -25,8 +25,9 @@ namespace dotnet.FHIR.hub
 
 	public interface IWebsocketConnections
 	{
-		void AddConnection(string topic, WebSocket ws);
-		void RemoveConnection(WebSocket ws);
-		List<WebSocketConnection> GetConnections(string topic);
+		void AddConnection(string id, string topic, WebSocket ws);
+		WebSocketConnection GetConnection(string id);
+		void RemoveConnection(string id);
+		List<WebSocket> GetTopicConnections(string topic);
 	}
 }

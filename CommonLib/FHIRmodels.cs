@@ -125,19 +125,6 @@ namespace dotnet.FHIR.common
 		public int StatusCode { get; set; }
 	}
 
-	public class WebSocketConnection : ModelBase
-	{
-		public WebSocketConnection(DateTime timeStamp, string topic, System.Net.WebSockets.WebSocket ws)
-		{
-			this.TimeStamp = timeStamp;
-			this.Topic = topic;
-			this.WebSocket = ws;
-		}
-		public DateTime TimeStamp;
-		public string Topic;
-		public System.Net.WebSockets.WebSocket WebSocket;
-	}
-
 	public sealed class NotificationEvent : ModelBase
 	{
 		[JsonProperty(PropertyName = "hub.topic")]
