@@ -176,8 +176,14 @@ namespace dotnet.FHIR.app
 			// Send notification. NOTE: This is a subset of the data allowed by the Hub.
 			// See FHIRCast specifications. Additional authentication will also be needed
 			string patientGuid = Guid.NewGuid().ToString();
-			Notification notification = new Notification
+			WebSocketMessage notificationMessage = new WebSocketMessage
 			{
+				Header = new MessageHeader
+				{
+
+				},
+				Body = new MessageBody
+				{ 
 				Timestamp = DateTime.Now,
 				Id = Guid.NewGuid().ToString("N"),
 				Event = new NotificationEvent()
@@ -223,8 +229,9 @@ namespace dotnet.FHIR.app
 						}
 					}
 				}
+				}
 			};
-			string json = notification.ToString();
+			string json = notificationMessage.ToString();
 			byte[] bytes = Encoding.ASCII.GetBytes(json);
 			await _ws.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 			//TODO: process acknowledgement response
@@ -235,7 +242,7 @@ namespace dotnet.FHIR.app
 		private async void ResetWebSocket()
 		{
 			await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-			Log("The websocket connection closed sucessfully.");
+			Log("The websocket connection closed sucCessfully.");
 			if (this.InvokeRequired)
 			{
 				this.btnSubscribe.Invoke((MethodInvoker)delegate
@@ -284,36 +291,32 @@ namespace dotnet.FHIR.app
 					}
 					continue;
 				}
-				// it's either an acknowledgement or an event notification...
-				// it's either an acknowledgement or an event notification...
-				Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
-				if (null != notification.Event)
+				// it's either an acknowledgement or an event notification, but it must have a header and body
+				WebSocketResponse wsResponse = new WebSocketResponse
+				{ Timestamp = DateTime.Now, Status = "OK", StatusCode = 200 };
+				WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+				if (null == nMessage.Body || null == nMessage.Header)
 				{
-					Log($"Event notification received:\r\n{notification.Event}");
-					// send success response to client
-					WebSocketResponse wsResponse = new WebSocketResponse
-					{
-						Timestamp = DateTime.Now,
-						Status = "OK",
-						StatusCode = 200
-					};
-					await SendStringAsync(_ws, wsResponse.ToString());
-				}
-				else if (null != notification.Status)
-				{
-					Log($"Acknowledgement response received:\r\n{notification.Status} ({notification.StatusCode})");
+					wsResponse.Status = "INVALID";
+					wsResponse.StatusCode = 400;
 				}
 				else
 				{
-					Log($"Unexpected websocket message received:\r\n{socketData}");
-					WebSocketResponse wsResponse = new WebSocketResponse
+					// todo: process header
+					NotificationEvent ev = nMessage.Body.Event;
+					if (null != ev)
 					{
-						Timestamp = DateTime.Now,
-						Status = "FAIL",
-						StatusCode = 400
-					};
-					await SendStringAsync(_ws, wsResponse.ToString());
+						Log($"Event notification received:\r\n{ev}");
+						// send success response to client
+					}
+					else if (null == nMessage.Body.Status)
+					{
+						Log($"Unexpected websocket message received:\r\n{socketData}");
+						wsResponse.Status = "INVALID";
+						wsResponse.StatusCode = 400;
+					}
 				}
+				await SendStringAsync(_ws, wsResponse.ToString()); // todo: process response
 			}
 			Log("Websocket reader terminated.");
 		}

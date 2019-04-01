@@ -48,7 +48,17 @@ namespace dotnet.FHIR.hub
 					this.logger.LogInformation($"Sending notification {conCount} websockets...");
 					foreach (WebSocket ws in connections)
 					{
-						var buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(notification));
+						WebSocketMessage wsMessage = new WebSocketMessage
+						{
+							Header = { },
+							Body = new MessageBody
+							{
+								Timestamp = notification.Timestamp,
+								Id = notification.Id,
+								Event = notification.Event
+							}
+						};
+						var buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(wsMessage));
 						var segment = new ArraySegment<byte>(buffer);
 						await ws.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
 						this.logger.LogInformation($"Notification sent successfully.");

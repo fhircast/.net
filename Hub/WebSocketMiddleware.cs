@@ -103,43 +103,67 @@ namespace dotnet.FHIR.hub
 							else
 							{
 								// it's either an acknowledgement or an event notification...
-								Notification notification = JsonConvert.DeserializeObject<Notification>(socketData);
-								if (null != notification.Event)
+								WebSocketResponse wsResponse = new WebSocketResponse
+								{ Timestamp = DateTime.Now, Status = "OK", StatusCode = 200 };
+								WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+								if (null == nMessage.Body || null == nMessage.Header)
 								{
-									this.logger.LogInformation($"Event notification received from {socketAddress}:\r\n{notification.Event.ToString()}");
-									// send success response to client
-									WebSocketResponse wsResponse = new WebSocketResponse
-									{
-										Timestamp = DateTime.Now,
-										Status = "OK",
-										StatusCode = 200
-									};
-									await SendStringAsync(ws, wsResponse.ToString());
-									// Forward notifications to Websocket connected subscribers
-									var subs = this.subscriptions.GetSubscriptions(notification.Event.Topic, notification.Event.HubEvent);
-									foreach (var sub in subs)
-									{
-										await this.notifications.SendNotification(notification, sub);
-									}
-								}
-								else if (null != notification.Status)
-								{
-									this.logger.LogInformation($"Acknowledgement response received from {socketAddress}:\r\n{notification.Status} ({notification.StatusCode})");
+									wsResponse.Status = "INVALID";
+									wsResponse.StatusCode = 400;
 								}
 								else
 								{
-									this.logger.LogError($"Unexpected websocket message received from {socketAddress}:\r\n{socketData}");
+									// todo: process header
+									MessageBody body = nMessage.Body;
+									NotificationEvent ev = body.Event;
+									if (null != ev)
+									{
+										this.logger.LogDebug($"Event notification received:\r\n{ev}");
+										// Forward notifications to Websocket connected subscribers
+										try
+										{
+											Notification n = new Notification
+											{
+												Timestamp = body.Timestamp,
+												Id = body.Id,
+												Event = body.Event
+											};
+											var subs = this.subscriptions.GetSubscriptions(ev.Topic, ev.HubEvent);
+											foreach (var sub in subs)
+											{
+												await this.notifications.SendNotification(n, sub);
+											}
+										}
+										catch (Exception ex)
+										{
+											this.logger.LogError($"Unexpected exception processing inbound notification event:\r\n{ex.ToString()}");
+											wsResponse.Status = "INVALID";
+											wsResponse.StatusCode = 400;
+										}
+										await SendStringAsync(ws, wsResponse.ToString()); // todo: process response
+									}
+									else if (null == body.Status)
+									{
+										this.logger.LogDebug($"Unexpected websocket message received:\r\n{socketData}");
+										wsResponse.Status = "INVALID";
+										wsResponse.StatusCode = 400;
+									}
+									else
+									{
+										//TODO: Process ack response
+										this.logger.LogDebug($"Received acknowledgement response:\r\n{socketData}");
+									}
 								}
 							}
+							this.logger.LogDebug($"The websocket connection thread for {socketAddress} is terminating. Removing WebsocketConnection...");
+							if (null != ws && ws.State == WebSocketState.Open)
+								await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", new CancellationToken());
+							this.connections.RemoveConnection(socketAddress);
+							ws.Dispose();
 						}
-						this.logger.LogDebug($"The websocket connection thread for {socketAddress} is terminating. Removing WebsocketConnection...");
-						if (null != ws && ws.State == WebSocketState.Open)
-							await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", new CancellationToken());
-						this.connections.RemoveConnection(socketAddress);
-						ws.Dispose();
 					}
+					this.logger.LogDebug("InvokeAsync returning.");
 				}
-				this.logger.LogDebug("InvokeAsync returning.");
 			}
 		}
 
