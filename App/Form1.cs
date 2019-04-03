@@ -266,9 +266,9 @@ namespace dotnet.FHIR.app
 		/// <param name="e"></param>
 		private async void webSocketReader_DoWork(object sender, DoWorkEventArgs e)
 		{
-			Log("Websocket reader starting...");
 			while (true)
 			{
+				Log("Websocket reader waiting for data...");
 				string socketData = null;
 				try
 				{
@@ -279,6 +279,8 @@ namespace dotnet.FHIR.app
 					System.Diagnostics.Debug.WriteLine(ex.ToString());
 					Log("Exception occurred reading websocket:\r\n" + ex.Message);
 				}
+				int len = null == socketData ? 0 : socketData.Length;
+				Log($"{len} bytes read - processing message...");
 				if (string.IsNullOrEmpty(socketData))
 				{
 					if (_ws.State != WebSocketState.Open)
@@ -291,32 +293,44 @@ namespace dotnet.FHIR.app
 					}
 					continue;
 				}
-				// it's either an acknowledgement or an event notification, but it must have a header and body
-				WebSocketResponse wsResponse = new WebSocketResponse
-				{ Timestamp = DateTime.Now, Status = "OK", StatusCode = 200 };
+				// it's either an acknowledgement or an event notification, 
+				// but it must have a header and body
 				WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-				if (null == nMessage.Body || null == nMessage.Header)
+				if (null != nMessage.Body)
 				{
-					wsResponse.Status = "INVALID";
-					wsResponse.StatusCode = 400;
-				}
-				else
-				{
+					WebSocketResponse wsResponse = new WebSocketResponse
+					{
+						Timestamp = DateTime.Now,
+						Status = "OK",
+						StatusCode = 200
+					};
 					// todo: process header
 					NotificationEvent ev = nMessage.Body.Event;
 					if (null != ev)
 					{
 						Log($"Event notification received:\r\n{ev}");
-						// send success response to client
 					}
-					else if (null == nMessage.Body.Status)
+					else
 					{
-						Log($"Unexpected websocket message received:\r\n{socketData}");
 						wsResponse.Status = "INVALID";
 						wsResponse.StatusCode = 400;
+						Log($"Received notification event message:\r\n{socketData}");
+					}
+					await SendStringAsync(_ws, wsResponse.ToString()); 
+				}
+				else
+				{
+					// should be an ack response
+					WebSocketResponse ack = JsonConvert.DeserializeObject<WebSocketResponse>(socketData);
+					if (null == ack.Status)
+					{
+						Log($"Received invalid websocket message:\r\n{socketData}");
+					}
+					else
+					{
+						Log($"Received acknowledgement response:\r\n{socketData}");
 					}
 				}
-				await SendStringAsync(_ws, wsResponse.ToString()); // todo: process response
 			}
 			Log("Websocket reader terminated.");
 		}

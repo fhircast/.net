@@ -103,16 +103,17 @@ namespace dotnet.FHIR.hub
 							else
 							{
 								// it's either an acknowledgement or an event notification...
-								WebSocketResponse wsResponse = new WebSocketResponse
-								{ Timestamp = DateTime.Now, Status = "OK", StatusCode = 200 };
 								WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-								if (null == nMessage.Body || null == nMessage.Header)
+								if (null != nMessage.Body)
 								{
-									wsResponse.Status = "INVALID";
-									wsResponse.StatusCode = 400;
-								}
-								else
-								{
+									// process message
+									// right now, it can only be a event notification 
+									WebSocketResponse wsResponse = new WebSocketResponse
+									{
+										Timestamp = DateTime.Now,
+										Status = "OK",
+										StatusCode = 200
+									};
 									// todo: process header
 									MessageBody body = nMessage.Body;
 									NotificationEvent ev = body.Event;
@@ -140,29 +141,36 @@ namespace dotnet.FHIR.hub
 											wsResponse.Status = "INVALID";
 											wsResponse.StatusCode = 400;
 										}
-										await SendStringAsync(ws, wsResponse.ToString()); // todo: process response
-									}
-									else if (null == body.Status)
-									{
-										this.logger.LogDebug($"Unexpected websocket message received:\r\n{socketData}");
-										wsResponse.Status = "INVALID";
-										wsResponse.StatusCode = 400;
 									}
 									else
 									{
-										//TODO: Process ack response
+										this.logger.LogError($"Received invalid event notification message:\r\n{socketData}");
+									}
+									await SendStringAsync(ws, wsResponse.ToString()); // todo: process response
+								}
+								else
+								{
+									// should be an ack response
+									WebSocketResponse ack = JsonConvert.DeserializeObject<WebSocketResponse>(socketData);
+									if (null == ack.Status)
+									{
+										this.logger.LogError($"Received invalid websocket message:\r\n{socketData}");
+									}
+									else
+									{
+										//todo: handle ack
 										this.logger.LogDebug($"Received acknowledgement response:\r\n{socketData}");
 									}
 								}
 							}
-							this.logger.LogDebug($"The websocket connection thread for {socketAddress} is terminating. Removing WebsocketConnection...");
-							if (null != ws && ws.State == WebSocketState.Open)
-								await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", new CancellationToken());
-							this.connections.RemoveConnection(socketAddress);
-							ws.Dispose();
 						}
+						this.logger.LogDebug($"The websocket connection thread for {socketAddress} is terminating. Removing WebsocketConnection...");
+						if (null != ws && ws.State == WebSocketState.Open)
+							await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", new CancellationToken());
+						this.connections.RemoveConnection(socketAddress);
+						ws.Dispose();
+						this.logger.LogDebug("InvokeAsync returning.");
 					}
-					this.logger.LogDebug("InvokeAsync returning.");
 				}
 			}
 		}
