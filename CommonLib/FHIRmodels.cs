@@ -112,7 +112,7 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "authorization")]
 		public string Authorization { get; set; }
 	}
-	public sealed class MessageBody
+	public sealed class MessageBody	// at this point, only Notification
 	{
 		[JsonProperty(PropertyName = "timestamp")]
 		public DateTime Timestamp { get; set; }
@@ -123,11 +123,6 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "event")]
 		public NotificationEvent Event { get; set; }
 
-		[JsonProperty(PropertyName = "status")]
-		public string Status { get; set; }
-
-		[JsonProperty(PropertyName = "statuscode")]
-		public int StatusCode { get; set; }
 	}
 
 	public sealed class WebSocketMessage : ModelBase
