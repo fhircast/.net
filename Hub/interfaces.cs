@@ -12,9 +12,10 @@ namespace dotnet.FHIR.hub
 
 	public interface ISubscriptions
 	{
+		Subscription GetSubscription(string channelEndpoint);
 		ICollection<Subscription> GetActiveSubscriptions();
 		void AddSubscription(Subscription subscription);
-		void RemoveSubscription(Subscription subscription);
+		void RemoveSubscription(string channelEndpoint);
 		ICollection<Subscription> GetSubscriptions(string topic, string notificationEvent);
 	}
 
@@ -25,9 +26,9 @@ namespace dotnet.FHIR.hub
 
 	public interface IWebsocketConnections
 	{
-		void AddConnection(string id, string topic, WebSocket ws);
-		WebSocketConnection GetConnection(string id);
-		void RemoveConnection(string id);
-		List<WebSocket> GetTopicConnections(string topic);
+		void AddConnection(string channelEndpoint, WebSocket ws);
+		WebSocket GetConnection(string channelEndpoint);
+		void RemoveConnection(string channelEndpoint);
+		List<WebSocket> GetTopicConnections(string topic, string notificationEvent);
 	}
 }

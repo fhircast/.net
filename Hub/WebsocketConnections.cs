@@ -2,72 +2,72 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net.WebSockets;
 using System;
 
 namespace dotnet.FHIR.hub
 {
-
-	public class WebSocketConnection : IEqualityComparer<WebSocketConnection>
-	{
-		public WebSocketConnection(string id, DateTime timeStamp, string topic, System.Net.WebSockets.WebSocket ws)
-		{
-			this.TimeStamp = timeStamp;
-			this.Topic = topic;
-			this.WebSocket = ws;
-		}
-		public string ID;
-		public DateTime TimeStamp;
-		public string Topic;
-		public System.Net.WebSockets.WebSocket WebSocket;
-
-		public bool Equals(WebSocketConnection x, WebSocketConnection y)
-		{
-			return x.ID == y.ID;
-		}
-
-		public int GetHashCode(WebSocketConnection obj)
-		{
-			WebSocketConnection wsc = (WebSocketConnection)obj;
-			return wsc.ID.GetHashCode();
-		}
-	}
-
 	public class WebSocketConnections : IWebsocketConnections
 	{
 		private readonly ILogger<Subscriptions> logger;
-		private ConcurrentDictionary<string, WebSocketConnection> connections = new ConcurrentDictionary<string, WebSocketConnection>(); 
+		private readonly ISubscriptions subscriptions;
+		private ConcurrentDictionary<string, WebSocket> connections = new ConcurrentDictionary<string, WebSocket>(); 
 
-		public WebSocketConnections(ILogger<Subscriptions> logger)
+		public WebSocketConnections(ILogger<Subscriptions> logger, ISubscriptions subscriptions)
 		{
 			this.logger = logger;
+			this.subscriptions = subscriptions;
 		}
-		public void AddConnection(string id,string topic, WebSocket ws)
+		public void AddConnection(string channelEndpoint, WebSocket ws)
 		{
-			this.connections.TryAdd(id, new WebSocketConnection(id, DateTime.Now, topic, ws));
-			//TODO: handle possible duplicates???
+			if (!this.connections.TryAdd(channelEndpoint, ws))
+			{
+				this.logger.LogWarning($"WebSocketConnections.AddConnection failed for endpoint {channelEndpoint}.");
+			}
 		}
-		public void RemoveConnection(string id)
+		public void RemoveConnection(string channelEndpoint)
 		{
-			WebSocketConnection wsc;
-			this.connections.TryRemove(id, out wsc);
+			WebSocket ws = null;
+			if (!this.connections.TryRemove(channelEndpoint, out ws))
+			{
+				this.logger.LogWarning($"WebSocketConnections.RemoveConnection failed for endpoint {channelEndpoint}.");
+			}
+			else
+			{
+				//ws.Dispose();
+			}
 		}
-		public WebSocketConnection GetConnection(string id)
+		public WebSocket GetConnection(string channelEndpoint)
 		{
-			WebSocketConnection wsc = null;
-			this.connections.TryGetValue(id, out wsc);
-			return wsc;
+			WebSocket ws = null;
+			if (!this.connections.TryGetValue(channelEndpoint, out ws))
+			{
+				this.logger.LogWarning($"WebSocketConnections.GetConnection failed for endpoint {channelEndpoint}.");
+			}
+			return ws;
 		}
 
-		public List<WebSocket> GetTopicConnections(string topic)
+		public List<WebSocket> GetTopicConnections(string topic, string notificationEvent)
 		{
+			this.logger.LogDebug($"GetTopicConnections: looking for connections with topic {topic}, event {notificationEvent}.");
 			List<WebSocket> sockets = new List<WebSocket>();
-			foreach (var obj in this.connections)
+			ICollection<Subscription> subs = subscriptions.GetSubscriptions(topic, notificationEvent);
+			foreach(Subscription s in subs)
 			{
-				WebSocketConnection wsc = (WebSocketConnection)obj.Value;
-				if (wsc.Topic == topic)
-					sockets.Add(wsc.WebSocket);
+				if (s.Channel.Type == "websocket")
+				{
+					WebSocket ws = GetConnection(s.Channel.Endpoint);
+					if (null != ws)
+					{
+						sockets.Add(ws);
+					}
+					else
+					{
+						this.logger.LogWarning($"Websocket for endpoint {s.Channel.Endpoint} not found in list of connections");
+					}
+				}
 			}
 			return sockets;
 		}

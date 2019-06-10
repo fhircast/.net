@@ -35,7 +35,7 @@ namespace dotnet.FHIR.common
 		{
 			JsonSerializerSettings s = new JsonSerializerSettings();
 			s.NullValueHandling = NullValueHandling.Ignore;
-			return JsonConvert.SerializeObject(this, s);
+			return JsonConvert.SerializeObject(this, Formatting.Indented, s);
 		}
 	}
 
@@ -67,10 +67,10 @@ namespace dotnet.FHIR.common
 
 	public sealed class Channel
 	{
-		//[JsonProperty(PropertyName = "type")]
+		[JsonProperty(PropertyName = "type")]
 		public string Type { get; set; }
 
-		//[JsonProperty(PropertyName = "endpoint")]
+		[JsonProperty(PropertyName = "endpoint")]
 		public string Endpoint { get; set; }
 	}
 
@@ -107,12 +107,7 @@ namespace dotnet.FHIR.common
 		public NotificationEvent Event { get; set; }
 	}
 
-	public sealed class MessageHeader
-	{
-		[JsonProperty(PropertyName = "authorization")]
-		public string Authorization { get; set; }
-	}
-	public sealed class MessageBody	// at this point, only Notification
+	public sealed class MessageBody	// at this point, only Notification and intent verification (subscription)
 	{
 		[JsonProperty(PropertyName = "timestamp")]
 		public DateTime Timestamp { get; set; }
@@ -123,26 +118,16 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "event")]
 		public NotificationEvent Event { get; set; }
 
+		[JsonProperty(PropertyName = "subscription")]
+		public Subscription Subscription { get; set; }
 	}
 
 	public sealed class WebSocketMessage : ModelBase
 	{
-		[JsonProperty(PropertyName = "header")]
-		public MessageHeader Header { get; set; }
+		[JsonProperty(PropertyName = "headers")]
+		public Dictionary<string, string> Headers { get; set; }
 		[JsonProperty(PropertyName = "body")]
 		public MessageBody Body { get; set; }
-	}
-
-	public sealed class WebSocketResponse : ModelBase
-	{
-		[JsonProperty(PropertyName = "timestamp")]
-		public DateTime Timestamp { get; set; }
-
-		[JsonProperty(PropertyName = "status")]
-		public string Status { get; set; }
-
-		[JsonProperty(PropertyName = "statuscode")]
-		public int StatusCode { get; set; }
 	}
 
 	public sealed class NotificationEvent : ModelBase
@@ -177,7 +162,7 @@ namespace dotnet.FHIR.common
 		public string Id { get; set; }
 
 		[JsonProperty(PropertyName = "identifier")]
-		public Identifier[] Identifiers { get; set; }
+		public Identifier[] Identifier { get; set; }
 
 		[JsonProperty(PropertyName = "uid")]
 		public string Uid { get; set; }
@@ -185,8 +170,6 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "patient")]
 		public ResourceReference Patient { get; set; }
 
-		[JsonProperty(PropertyName = "accession")]
-		public Identifier Accession { get; set; }
 	}
 
 	public class Identifier : ModelBase

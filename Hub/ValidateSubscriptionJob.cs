@@ -36,7 +36,7 @@ namespace dotnet.FHIR.hub
 			}
 			else if (sub.Mode == SubscriptionMode.Unsubscribe)
 			{
-				this.subscriptions.RemoveSubscription(sub);
+				this.subscriptions.RemoveSubscription(sub.Channel.Endpoint);
 			}
 		}
 	}

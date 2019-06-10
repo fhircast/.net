@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Net.Http;
-
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,8 +18,9 @@ namespace dotnet.FHIR.app
 {
 	public partial class Form1 : Form
 	{
-		private ClientWebSocket _ws = new ClientWebSocket();
-		private BackgroundWorker webSocketReader;
+		private ClientWebSocket _ws = null;
+		private string _endpoint = null;
+		private BackgroundWorker _webSocketReader;
 		private string _topic = null; 
 		private string _ipaddress = null;
 
@@ -34,8 +34,9 @@ namespace dotnet.FHIR.app
 		private async void Form1_Load(object sender, EventArgs e)
 		{
 			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
+			txtToken.Text = Properties.Settings.Default.txtToken;
 			txtSecret.Text = Properties.Settings.Default.txtSecret;
-			txtUserName.Text = Properties.Settings.Default.txtUserName;
+			txtTopic.Text = Properties.Settings.Default.txtTopic;
 			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
 			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
 			txtNotEvent.Text = Properties.Settings.Default.txtNotEvent;
@@ -58,107 +59,87 @@ namespace dotnet.FHIR.app
 			// save subscription parameters
 			Properties.Settings.Default.txtHubUrl = txtHubUrl.Text;
 			Properties.Settings.Default.txtSecret = txtSecret.Text;
-			Properties.Settings.Default.txtUserName = txtUserName.Text;
+			Properties.Settings.Default.txtToken = txtToken.Text;
+			Properties.Settings.Default.txtTopic = txtTopic.Text;
 			Properties.Settings.Default.txtSubEvents = txtSubEvents.Text;
 			Properties.Settings.Default.Save();
+			HttpClient client = new HttpClient();
+			HttpResponseMessage response;
+			//Subscribe/Unsubscribe
+			_topic = txtTopic.Text; 
+			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
+			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", txtToken.Text);
+			Dictionary<string, string> hub = new Dictionary<string, string>
+			{
+				{ "hub.channel.type", "websocket" },
+				{ "hub.mode",  btnSubscribe.Text.ToLower()},
+				{ "hub.topic", _topic },
+				{ "hub.events", txtSubEvents.Text },
+				{ "hub.secret", txtSecret.Text },
+				{ "hub.lease", "999" },
+			};
 			if (btnSubscribe.Text == "Unsubscribe")
 			{
-				// Disconnect WebSocket
-				if (_ws.State == WebSocketState.Open)
-				{
-					try
-					{
-						ResetWebSocket();
-						webSocketReader.Dispose();
-						webSocketReader = new BackgroundWorker();
-					}
-					catch (Exception ex)
-					{
-						_ws.Dispose();
-						_ws = new ClientWebSocket();
-						MessageBox.Show(ex.ToString());
-						return;
-					}
-				}
-				else
-				{
-					Log("WARNING: The websocket was already disconnected. ");
-				}
-				btnSubscribe.Text = "Subscribe";
-				btnNotify.Enabled = false;
+				hub.Add("hub.channel.endpoint", _endpoint);
 			}
-			else 
-			{ 
-				// get topic
-				HttpClient client = new HttpClient();
-				UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/gettopic?username={txtUserName.Text}&secret={txtSecret.Text}");
-				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
-				HttpResponseMessage response;
+			request.Content = new FormUrlEncodedContent(hub);
+			response = await client.SendAsync(request);
+			if (!response.IsSuccessStatusCode)
+			{
+				Log($"{btnSubscribe.Text} request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+			}
+			else if (btnSubscribe.Text == "Unsubscribe")
+			{
+				Log($"{btnSubscribe.Text} request was accepted. Closing web socket and terminating background thread.");
+				btnSubscribe.Text = "Subscribe";
 				try
 				{
-					response = await client.SendAsync(request);
-					_topic = await response.Content.ReadAsStringAsync();
-					if (String.IsNullOrEmpty(_topic))
+					await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
+					_ws.Dispose();
+				}
+				catch(Exception ex)
+				{
+					Log($"Exception occurred closing the websocket: {ex.Message}");
+				}
+				_endpoint = null;
+			}
+			else
+			{
+				_endpoint = await response.Content.ReadAsStringAsync();
+				Log($"Hub returned websocket URL: {_endpoint}");
+				// Connect to websocket
+				try
+				{
+					Cursor.Current = Cursors.WaitCursor;
+					Log($"Connecting to Hub Websocket: {_endpoint}");
+					_ws = new ClientWebSocket();
+					await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
+					// read intent verification
+					string verification = await WebSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
+					Log($"Websocket connection received intent verification:\r\n{verification}");
+					//TODO: validate response.
+					WebSocketMessage intentAck = new WebSocketMessage
 					{
-						Log($"Validation failed for username: {txtUserName.Text}, secret: {txtSecret.Text}");
-						return;
-					}
+						Headers = new Dictionary<string, string>
+						{
+							{ "status", "ACCEPTED" },
+							{ "statusCode", "202" }
+						}
+					};
+					await WebSocketLib.SendStringAsync(_ws, intentAck.ToString());
+					// set up background socket reader and exit
+					Cursor.Current = Cursors.Default;
+					btnNotify.Enabled = true;
+					_webSocketReader = new BackgroundWorker();
+					_webSocketReader.DoWork += webSocketReader_DoWork;
+					_webSocketReader.RunWorkerAsync();
 				}
 				catch (Exception ex)
 				{
-					Log($"Exception occurred getting topic:\r\n{ex.ToString()}");
+					_ws.Dispose();
+					MessageBox.Show(ex.ToString());
 					return;
-				}
-				Log($"GetTopic response: {_topic}");
-				//Subscribe
-				urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
-				request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
-				request.Content = new FormUrlEncodedContent(
-					new Dictionary<string, string>
-					{
-						{ "hub.callback", "" },
-						{ "hub.channel.type", "websocket" },
-						{ "hub.mode", btnSubscribe.Text.ToLower() },
-						{ "hub.topic", _topic },
-						{ "hub.events", txtSubEvents.Text },
-						{ "hub.lease", "999" },
-						{ "hub.secret", "" }	// not to be confused with "app secret". This value isn't currently implementented on the Hub
-					}
-				);
-				response = await client.SendAsync(request);
-				string responseText = await response.Content.ReadAsStringAsync();
-				Log($"Subscription response: {responseText}");
-				// Connect to websocket
-				if (_ws.State != WebSocketState.Open)
-				{
-					try
-					{
-						Cursor.Current = Cursors.WaitCursor;
-						string wsUrl = $"{txtHubUrl.Text}/{_topic}".Replace("http", "ws").Replace("https", "wss");
-						Log($"Connecting to Hub Websocket: {wsUrl}");
-						await _ws.ConnectAsync(new Uri(wsUrl), CancellationToken.None);
-						// read response
-						string conResponse = await ReceiveStringAsync(_ws, CancellationToken.None);
-						Log($"Websocket connection received response:\r\n{conResponse}");
-						//TODO: validate response. 
-						// set up background socket reader and exit
-						Cursor.Current = Cursors.Default;
-						btnNotify.Enabled = true;
-						webSocketReader = new BackgroundWorker();
-						webSocketReader.DoWork += webSocketReader_DoWork;
-						webSocketReader.RunWorkerAsync();
-					}
-					catch (Exception ex)
-					{
-						_ws.Dispose();
-						_ws = new ClientWebSocket();
-						MessageBox.Show(ex.ToString());
-						return;
-					}
-				}
-				else
-				{
-					Log("WARNING: The websocket was already connected. ");
 				}
 				btnSubscribe.Text = "Unsubscribe";
 			}
@@ -178,57 +159,56 @@ namespace dotnet.FHIR.app
 			string patientGuid = Guid.NewGuid().ToString();
 			WebSocketMessage notificationMessage = new WebSocketMessage
 			{
-				Header = new MessageHeader
-				{
-
-				},
 				Body = new MessageBody
 				{ 
-				Timestamp = DateTime.Now,
-				Id = Guid.NewGuid().ToString("N"),
-				Event = new NotificationEvent()
-				{
-					HubEvent = txtNotEvent.Text,
-					Topic = txtNotTopic.Text,
-					Contexts = new Context[]
+					Timestamp = DateTime.Now,
+					Id = $"TestApp-{Guid.NewGuid().ToString("N")}",
+					Event = new NotificationEvent()
 					{
-						new Context()
+						HubEvent = txtNotEvent.Text,
+						Topic = _topic,
+						Contexts = new Context[]
 						{
-							Key = "patient",
-							Resource = new Resource()
+							new Context()
 							{
-								ResourceType = "Patient",
-								Id = patientGuid,
-								Identifiers = new Identifier[]
+								Key = "patient",
+								Resource = new Resource()
 								{
-									new Identifier()
+									ResourceType = "Patient",
+									Id = patientGuid,
+									Identifier = new Identifier[]
 									{
-										System = "urn:mrn",
-										Value= txtNotMRN.Text
+										new Identifier()
+										{
+											System = "urn:mrn",
+											Value= txtNotMRN.Text
+										}
 									}
 								}
-							}
-						},
-						new Context()
-						{
-							Key = "study",
-							Resource = new Resource()
+							},
+							new Context()
 							{
-								ResourceType = "ImagingStudy",
-								Id = Guid.NewGuid().ToString(),
-								Accession = new Identifier
+								Key = "study",
+								Resource = new Resource()
 								{
-									System = "urn:accession",
-									Value = txtNotAccession.Text
-								},
-								Patient = new ResourceReference
-								{
-									Reference = $"patient/{patientGuid}"
+									ResourceType = "ImagingStudy",
+									Id = $"Acc-{txtNotAccession.Text}",
+									Identifier = new Identifier[]
+									{
+										new Identifier()
+										{
+											System = "urn:accession",
+											Value = txtNotAccession.Text
+										}
+									},
+									Patient = new ResourceReference
+									{
+										Reference = $"patient/{patientGuid}"
+									}
 								}
 							}
 						}
 					}
-				}
 				}
 			};
 			string json = notificationMessage.ToString();
@@ -238,23 +218,6 @@ namespace dotnet.FHIR.app
 		}
 
 		#endregion
-
-		private async void ResetWebSocket()
-		{
-			await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-			Log("The websocket connection closed sucCessfully.");
-			if (this.InvokeRequired)
-			{
-				this.btnSubscribe.Invoke((MethodInvoker)delegate
-				{
-					// Running on the UI thread
-					btnSubscribe.Text = "Subscribe";
-				});
-			}
-			else
-				btnSubscribe.Text = "Subscribe";
-			_ws = new ClientWebSocket();
-		}
 
 		/// <summary>
 		/// Thread that reads messages from each websocket connect
@@ -266,111 +229,82 @@ namespace dotnet.FHIR.app
 		/// <param name="e"></param>
 		private async void webSocketReader_DoWork(object sender, DoWorkEventArgs e)
 		{
-			while (true)
+			while (_ws.State == WebSocketState.Open)
 			{
 				Log("Websocket reader waiting for data...");
 				string socketData = null;
 				try
 				{
-					socketData = await ReceiveStringAsync(_ws, CancellationToken.None);
+					socketData = await WebSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
 				}
 				catch (Exception ex)
 				{
-					System.Diagnostics.Debug.WriteLine(ex.ToString());
-					Log("Exception occurred reading websocket:\r\n" + ex.Message);
+					Log($"Error reading websocket: {ex.Message}.");
+					break;
 				}
 				int len = null == socketData ? 0 : socketData.Length;
-				Log($"{len} bytes read - processing message...");
 				if (string.IsNullOrEmpty(socketData))
 				{
-					if (_ws.State != WebSocketState.Open)
-					{
-						Log("Websocket is closed - the reader is terminating...");
-						// dispose of the socket and remove the connection
-						ResetWebSocket();
-						// TODO: reset UI. Other cleanup?
-						break;
-					}
-					continue;
-				}
-				// it's either an acknowledgement or an event notification, 
-				// but it must have a header and body
-				WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-				if (null != nMessage.Body)
-				{
-					WebSocketResponse wsResponse = new WebSocketResponse
-					{
-						Timestamp = DateTime.Now,
-						Status = "OK",
-						StatusCode = 200
-					};
-					// todo: process header
-					NotificationEvent ev = nMessage.Body.Event;
-					if (null != ev)
-					{
-						Log($"Event notification received:\r\n{ev}");
-					}
-					else
-					{
-						wsResponse.Status = "INVALID";
-						wsResponse.StatusCode = 400;
-						Log($"Received notification event message:\r\n{socketData}");
-					}
-					await SendStringAsync(_ws, wsResponse.ToString()); 
+					Log($"Websocket read empty packet. State: {_ws.State}, Closing status: {_ws.CloseStatus}/{_ws.CloseStatusDescription}.");
+					//try
+					//{
+					//	_ws.Dispose();
+					//}
+					//catch (Exception ex)
+					//{
+					//	Log($"An error occurred disposing the websocket: {ex.Message}");
+					//}
+					//finally
+					//{
+						_ws = null;
+					//}
 				}
 				else
 				{
-					// should be an ack response
-					WebSocketResponse ack = JsonConvert.DeserializeObject<WebSocketResponse>(socketData);
-					if (null == ack.Status)
+					Log($"{len} bytes read - processing message...");
+					// it's either an acknowledgement or an event notification, 
+					// but it must have a header and body
+					WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+					if (null != nMessage.Body)
 					{
-						Log($"Received invalid websocket message:\r\n{socketData}");
+						WebSocketMessage wsResponse;
+						// todo: process header
+						NotificationEvent ev = nMessage.Body.Event;
+						if (null != ev)
+						{
+							Log($"Event notification received:\r\n{nMessage}");
+							wsResponse = new WebSocketMessage
+							{
+								Headers = new Dictionary<string, string>
+							{
+								{ "status" , "ACCEPTED" },
+								{ "statusCode", "202" }
+							}
+							};
+						}
+						else
+						{
+							Log($"Invalid event notification received");
+							wsResponse = new WebSocketMessage
+							{
+								Headers = new Dictionary<string, string>
+							{
+								{ "status" , "INVALID" },
+								{ "statusCode", "400" }
+							}
+							};
+						}
+						await WebSocketLib.SendStringAsync(_ws, wsResponse.ToString());
 					}
 					else
 					{
+						// should be a response
+						WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
 						Log($"Received acknowledgement response:\r\n{socketData}");
 					}
 				}
 			}
 			Log("Websocket reader terminated.");
-		}
-
-		private static Task SendStringAsync(WebSocket socket, string data, CancellationToken ct = default(CancellationToken))
-		{
-			var buffer = Encoding.UTF8.GetBytes(data);
-			var segment = new ArraySegment<byte>(buffer);
-			return socket.SendAsync(segment, WebSocketMessageType.Text, true, ct);
-		}
-
-		private static async Task<string> ReceiveStringAsync(WebSocket socket, CancellationToken ct = default(CancellationToken))
-		{
-			var buffer = new ArraySegment<byte>(new byte[8192]);
-			using (var ms = new MemoryStream())
-			{
-				WebSocketReceiveResult result;
-				do
-				{
-					ct.ThrowIfCancellationRequested();
-
-					result = await socket.ReceiveAsync(buffer, ct);
-					ms.Write(buffer.Array, buffer.Offset, result.Count);
-				}
-				while (!result.EndOfMessage);
-
-				ms.Seek(0, SeekOrigin.Begin);
-				if (result.MessageType != WebSocketMessageType.Text)
-				{
-					return null;
-				}
-
-				// Encoding UTF8: https://tools.ietf.org/html/rfc6455#section-5.6
-				using (var reader = new StreamReader(ms, Encoding.UTF8))
-				{
-					string data = await reader.ReadToEndAsync();
-					System.Diagnostics.Debug.WriteLine($"received data: {data}");
-					return data;
-				}
-			}
 		}
 
 		private void Log(string message)
@@ -385,6 +319,25 @@ namespace dotnet.FHIR.app
 			}
 			else
 				txtLog.Text += DateTime.Now.ToString("G") + "\t" + message + "\r\n";
+		}
+
+		private void btnClear_Click(object sender, EventArgs e)
+		{
+			if (this.InvokeRequired)
+			{
+				this.txtLog.Invoke((MethodInvoker)delegate
+				{
+					// Running on the UI thread
+					txtLog.Text = "";
+				});
+			}
+			else
+				txtLog.Text = "";
+		}
+
+		private void btnCopy_Click(object sender, EventArgs e)
+		{
+			Clipboard.SetText(txtLog.Text);
 		}
 	}
 }

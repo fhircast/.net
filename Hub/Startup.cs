@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-
 namespace dotnet.FHIR.hub
 {
 	public class Startup

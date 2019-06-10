@@ -24,6 +24,7 @@ namespace dotnet.FHIR.hub.Controllers
 		private readonly IConfiguration settings;
 
 		private string connectionString;
+		private string webSocketProtocol;
 
 		public HubController(ILogger<HubController> logger, IBackgroundJobClient backgroundJobClient, ISubscriptions subscriptions, INotifications notifications, IConfiguration config)
 		{
@@ -34,85 +35,51 @@ namespace dotnet.FHIR.hub.Controllers
 			this.settings = config;
 #if DEBUG
 			this.connectionString = settings.GetConnectionString("Development");
+			this.webSocketProtocol = "ws://";
 #else
 			this.connectionString = settings.GetConnectionString("Default");
+			this.webSocketProtocol = "wss://";
 #endif
 			this.logger.LogInformation($"Using database connection string: {this.connectionString}");
 		}
 
 		#region REST Methods
 
-		[HttpGet("GetTopic")]
-		public string GetTopic(string username, string secret)
-		{
-			this.logger.LogDebug($"GetTopic({username}, {secret}");
-			string topic = null;
-			using (SqlConnection connection = new SqlConnection(this.connectionString))
-			{
-				string queryString = 
-					@"SELECT ca.Name as AppName, ui.Topic, ui.FirstName, ui.LastName
-					FROM ClientApp as ca
-						LEFT JOIN ClientAppUser as cau on cau.ClientAppID = ca.ClientAppID
-						LEFT JOIN UserIdentity as ui on ui.UserIdentityID = cau.UserIdentityID
-						WHERE cau.UserName=@username AND ca.secret=@secret";
-				SqlDataAdapter adapter = new SqlDataAdapter(queryString, connection);
-				adapter.SelectCommand.Parameters.AddWithValue("@username", username);
-				adapter.SelectCommand.Parameters.AddWithValue("@secret", secret);
-				DataSet client = new DataSet();
-				try { adapter.Fill(client); }
-				catch (Exception ex)
-				{
-					this.logger.LogError($"Exception in Connect:\r\n{ex.ToString()}");
-					return null;
-				}
-				if (client.Tables.Count > 0 && client.Tables[0].Rows.Count > 0)
-				{
-					DataRow row = client.Tables[0].Rows[0];
-					topic = row["Topic"].ToString();
-					string firstName = row["FirstName"].ToString();
-					string lastName = row["LastName"].ToString();
-					string appName = row["AppName"].ToString();
-					this.logger.LogInformation($"User validated successfully: app name:'{appName}', user:'{firstName} {lastName}, topic:'{topic}'");
-				}
-				else
-				{
-					this.logger.LogInformation($"{username}/{secret} did not valildate; returning null topic");
-				}
-			}
-			return topic;
-		}
-
 		[HttpPost]
-		public IActionResult Subscribe([FromForm] Subscription hub)
+		public IActionResult Subscribe()
 		{
 			this.logger.LogDebug($"Subscribe...");
 			Subscription sub = new Subscription();
 			sub.Callback = Request.Form["hub.callback"];
 			sub.Channel = new Channel();
 			sub.Channel.Type = Request.Form["hub.channel.type"];
+			sub.Channel.Endpoint = Request.Form["hub.channel.endpoint"];
 			sub.Events = Request.Form["hub.events"];
 			sub.Mode = Request.Form["hub.mode"];
 			sub.Secret = Request.Form["hub.secret"];
 			sub.Topic = Request.Form["hub.topic"];
 			this.logger.LogDebug($"Subscribe; subscription:{Environment.NewLine}{sub}");
-			if (null == sub.Channel)
+			if (null == sub.Channel.Type)
 			{
-				sub.Channel = new Channel() { Type = ChannelType.Rest };
+				sub.Channel.Type = ChannelType.Rest;
 			}
 			if (sub.Channel.Type.ToLower() == ChannelType.Websocket)
 			{
-				this.logger.LogInformation($"Processing subscription request for websocket on topic {sub.Topic}.");
+				this.logger.LogInformation($"Processing {sub.Mode} request for websocket on topic {sub.Topic}.");
 				if (sub.Mode == SubscriptionMode.Subscribe)
 				{
-					this.logger.LogInformation($"Adding subscription: {sub}.");
+					string guid = Guid.NewGuid().ToString("n");
+					string wsUrl = $"{this.webSocketProtocol}{this.HttpContext.Request.Host}/ws/{sub.Topic}_{guid}";
+					sub.Channel.Endpoint = wsUrl;
 					this.subscriptions.AddSubscription(sub);
-					return this.Ok();
+					this.logger.LogDebug($"Subscription added pending intent verification. Returning websocket url: {wsUrl}");
+					return this.Accepted((object)wsUrl);	// Needs to be cast as object so that it is put into the body
 				}
 				else
 				{
-					this.logger.LogInformation($"Unsubscribing subscription: {sub}.");
-					this.subscriptions.RemoveSubscription(sub);
-					return this.Ok("unsubscribed");
+					this.logger.LogInformation($"Removing subscription at {sub.Channel.Endpoint}.");
+					this.subscriptions.RemoveSubscription(sub.Channel.Endpoint);
+					return this.Accepted();
 				}
 			}
 			else
@@ -124,10 +91,11 @@ namespace dotnet.FHIR.hub.Controllers
 		}
 
 		/// <summary>
-		/// Gets all active subscriptions.
+		/// Gets all active subscriptions. This is for diagnostic purposes only. It should not be available
+		/// to consumers.
 		/// </summary>
 		/// <returns>All active subscriptions.</returns>
-		[HttpGet]
+		[HttpGet("GetSubscriptions")]
 		public IEnumerable<Subscription> GetSubscriptions()
 		{
 			this.logger.LogDebug($"Default method: GetSubscriptions...");
@@ -151,7 +119,7 @@ namespace dotnet.FHIR.hub.Controllers
 			{
 				await this.notifications.SendNotification(notification, sub);
 			}
-			return this.Ok();
+			return this.Accepted();
 		}
 #endregion
 	}

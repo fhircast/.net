@@ -11,7 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonLib", "CommonLib\Comm
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA1EE4D1-208D-462F-810D-D47A1BE7C10D}"
 	ProjectSection(SolutionItems) = preProject
-		docs\FHIR Websockets Prototype Spec.docx = docs\FHIR Websockets Prototype Spec.docx
 		readme.md = readme.md
 	EndProjectSection
 EndProject
