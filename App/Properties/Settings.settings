@@ -23,7 +23,10 @@
     <Setting Name="txtNotMRN" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="txtUserName" Type="System.String" Scope="User">
+    <Setting Name="txtTopic" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="txtToken" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>

@@ -29,9 +29,15 @@
 		private void InitializeComponent()
 		{
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.txtTopic = new System.Windows.Forms.TextBox();
+			this.label4 = new System.Windows.Forms.Label();
 			this.btnSubscribe = new System.Windows.Forms.Button();
 			this.txtSubEvents = new System.Windows.Forms.TextBox();
+			this.txtHubUrl = new System.Windows.Forms.TextBox();
+			this.label1 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
+			this.txtToken = new System.Windows.Forms.TextBox();
+			this.label2 = new System.Windows.Forms.Label();
 			this.txtLog = new System.Windows.Forms.TextBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.txtNotMRN = new System.Windows.Forms.TextBox();
@@ -43,38 +49,54 @@
 			this.label6 = new System.Windows.Forms.Label();
 			this.txtNotTopic = new System.Windows.Forms.TextBox();
 			this.label7 = new System.Windows.Forms.Label();
-			this.label1 = new System.Windows.Forms.Label();
-			this.txtHubUrl = new System.Windows.Forms.TextBox();
+			this.btnClear = new System.Windows.Forms.Button();
+			this.btnCopy = new System.Windows.Forms.Button();
 			this.txtSecret = new System.Windows.Forms.TextBox();
-			this.label2 = new System.Windows.Forms.Label();
-			this.txtUserName = new System.Windows.Forms.TextBox();
-			this.label4 = new System.Windows.Forms.Label();
+			this.label9 = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.txtUserName);
+			this.groupBox1.Controls.Add(this.txtSecret);
+			this.groupBox1.Controls.Add(this.label9);
+			this.groupBox1.Controls.Add(this.txtTopic);
 			this.groupBox1.Controls.Add(this.label4);
 			this.groupBox1.Controls.Add(this.btnSubscribe);
 			this.groupBox1.Controls.Add(this.txtSubEvents);
 			this.groupBox1.Controls.Add(this.txtHubUrl);
 			this.groupBox1.Controls.Add(this.label1);
 			this.groupBox1.Controls.Add(this.label3);
-			this.groupBox1.Controls.Add(this.txtSecret);
+			this.groupBox1.Controls.Add(this.txtToken);
 			this.groupBox1.Controls.Add(this.label2);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(310, 185);
+			this.groupBox1.Size = new System.Drawing.Size(310, 224);
 			this.groupBox1.TabIndex = 3;
 			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Subscribe/Connect";
+			this.groupBox1.Text = "Subscribe";
+			// 
+			// txtTopic
+			// 
+			this.txtTopic.Location = new System.Drawing.Point(75, 127);
+			this.txtTopic.Name = "txtTopic";
+			this.txtTopic.Size = new System.Drawing.Size(231, 20);
+			this.txtTopic.TabIndex = 6;
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(6, 130);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(37, 13);
+			this.label4.TabIndex = 13;
+			this.label4.Text = "Topic:";
 			// 
 			// btnSubscribe
 			// 
 			this.btnSubscribe.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.btnSubscribe.Location = new System.Drawing.Point(229, 156);
+			this.btnSubscribe.Location = new System.Drawing.Point(229, 189);
 			this.btnSubscribe.Name = "btnSubscribe";
 			this.btnSubscribe.Size = new System.Drawing.Size(75, 23);
 			this.btnSubscribe.TabIndex = 10;
@@ -84,23 +106,55 @@
 			// 
 			// txtSubEvents
 			// 
-			this.txtSubEvents.Location = new System.Drawing.Point(73, 124);
+			this.txtSubEvents.Location = new System.Drawing.Point(75, 155);
 			this.txtSubEvents.Name = "txtSubEvents";
 			this.txtSubEvents.Size = new System.Drawing.Size(231, 20);
 			this.txtSubEvents.TabIndex = 8;
 			// 
+			// txtHubUrl
+			// 
+			this.txtHubUrl.Location = new System.Drawing.Point(6, 45);
+			this.txtHubUrl.Name = "txtHubUrl";
+			this.txtHubUrl.Size = new System.Drawing.Size(298, 20);
+			this.txtHubUrl.TabIndex = 2;
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(3, 26);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(231, 13);
+			this.label1.TabIndex = 1;
+			this.label1.Text = "Base hub URL (ex: http://fhirhub.hl7.org):";
+			// 
 			// label3
 			// 
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(6, 127);
+			this.label3.Location = new System.Drawing.Point(6, 158);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(43, 13);
 			this.label3.TabIndex = 5;
 			this.label3.Text = "Events:";
 			// 
+			// txtToken
+			// 
+			this.txtToken.Location = new System.Drawing.Point(75, 71);
+			this.txtToken.Name = "txtToken";
+			this.txtToken.Size = new System.Drawing.Size(231, 20);
+			this.txtToken.TabIndex = 4;
+			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(6, 74);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(66, 13);
+			this.label2.TabIndex = 3;
+			this.label2.Text = "Auth Token:";
+			// 
 			// txtLog
 			// 
-			this.txtLog.Location = new System.Drawing.Point(12, 203);
+			this.txtLog.Location = new System.Drawing.Point(18, 242);
 			this.txtLog.Multiline = true;
 			this.txtLog.Name = "txtLog";
 			this.txtLog.ReadOnly = true;
@@ -121,7 +175,7 @@
 			this.groupBox2.Controls.Add(this.label7);
 			this.groupBox2.Location = new System.Drawing.Point(328, 12);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(277, 185);
+			this.groupBox2.Size = new System.Drawing.Size(277, 175);
 			this.groupBox2.TabIndex = 10;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Notify";
@@ -162,7 +216,7 @@
 			// 
 			this.btnNotify.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnNotify.Enabled = false;
-			this.btnNotify.Location = new System.Drawing.Point(196, 156);
+			this.btnNotify.Location = new System.Drawing.Point(196, 146);
 			this.btnNotify.Name = "btnNotify";
 			this.btnNotify.Size = new System.Drawing.Size(75, 23);
 			this.btnNotify.TabIndex = 20;
@@ -192,6 +246,7 @@
 			this.txtNotTopic.Name = "txtNotTopic";
 			this.txtNotTopic.Size = new System.Drawing.Size(199, 20);
 			this.txtNotTopic.TabIndex = 12;
+			this.txtNotTopic.Visible = false;
 			// 
 			// label7
 			// 
@@ -201,60 +256,51 @@
 			this.label7.Size = new System.Drawing.Size(37, 13);
 			this.label7.TabIndex = 3;
 			this.label7.Text = "Topic:";
+			this.label7.Visible = false;
 			// 
-			// label1
+			// btnClear
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(3, 26);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(231, 13);
-			this.label1.TabIndex = 1;
-			this.label1.Text = "Base hub URL (ex: http://fhirhub.nuance.com):";
+			this.btnClear.Location = new System.Drawing.Point(18, 501);
+			this.btnClear.Name = "btnClear";
+			this.btnClear.Size = new System.Drawing.Size(75, 23);
+			this.btnClear.TabIndex = 11;
+			this.btnClear.Text = "Clear Log";
+			this.btnClear.UseVisualStyleBackColor = true;
+			this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
 			// 
-			// txtHubUrl
+			// btnCopy
 			// 
-			this.txtHubUrl.Location = new System.Drawing.Point(6, 45);
-			this.txtHubUrl.Name = "txtHubUrl";
-			this.txtHubUrl.Size = new System.Drawing.Size(298, 20);
-			this.txtHubUrl.TabIndex = 2;
+			this.btnCopy.Location = new System.Drawing.Point(104, 501);
+			this.btnCopy.Name = "btnCopy";
+			this.btnCopy.Size = new System.Drawing.Size(75, 23);
+			this.btnCopy.TabIndex = 12;
+			this.btnCopy.Text = "Copy Log";
+			this.btnCopy.UseVisualStyleBackColor = true;
+			this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
 			// 
 			// txtSecret
 			// 
-			this.txtSecret.Location = new System.Drawing.Point(75, 71);
+			this.txtSecret.Location = new System.Drawing.Point(75, 99);
 			this.txtSecret.Name = "txtSecret";
-			this.txtSecret.Size = new System.Drawing.Size(229, 20);
-			this.txtSecret.TabIndex = 4;
+			this.txtSecret.Size = new System.Drawing.Size(231, 20);
+			this.txtSecret.TabIndex = 15;
 			// 
-			// label2
+			// label9
 			// 
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(6, 74);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(63, 13);
-			this.label2.TabIndex = 3;
-			this.label2.Text = "App Secret:";
-			// 
-			// txtUserName
-			// 
-			this.txtUserName.Location = new System.Drawing.Point(73, 97);
-			this.txtUserName.Name = "txtUserName";
-			this.txtUserName.Size = new System.Drawing.Size(231, 20);
-			this.txtUserName.TabIndex = 6;
-			// 
-			// label4
-			// 
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(6, 100);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(61, 13);
-			this.label4.TabIndex = 13;
-			this.label4.Text = "User name:";
+			this.label9.AutoSize = true;
+			this.label9.Location = new System.Drawing.Point(6, 102);
+			this.label9.Name = "label9";
+			this.label9.Size = new System.Drawing.Size(41, 13);
+			this.label9.TabIndex = 14;
+			this.label9.Text = "Secret:";
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(616, 466);
+			this.ClientSize = new System.Drawing.Size(616, 535);
+			this.Controls.Add(this.btnCopy);
+			this.Controls.Add(this.btnClear);
 			this.Controls.Add(this.groupBox2);
 			this.Controls.Add(this.txtLog);
 			this.Controls.Add(this.groupBox1);
@@ -286,12 +332,16 @@
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.TextBox txtNotAccession;
 		private System.Windows.Forms.Label label5;
-		private System.Windows.Forms.TextBox txtUserName;
+		private System.Windows.Forms.TextBox txtTopic;
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.TextBox txtHubUrl;
 		private System.Windows.Forms.Label label1;
-		private System.Windows.Forms.TextBox txtSecret;
+		private System.Windows.Forms.TextBox txtToken;
 		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.Button btnClear;
+		private System.Windows.Forms.Button btnCopy;
+		private System.Windows.Forms.TextBox txtSecret;
+		private System.Windows.Forms.Label label9;
 	}
 }
 

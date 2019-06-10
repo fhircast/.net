@@ -36,21 +36,20 @@ namespace dotnet.FHIR.hub
 			}
 			else if (sub.Channel.Type == ChannelType.Websocket)
 			{
-				this.logger.LogInformation($"Sending notification {notification} to Websocket {sub.Channel. Endpoint}");
-				List<WebSocket> connections = this.connections.GetTopicConnections(sub.Topic);
-				int conCount = connections.Count;
+				this.logger.LogInformation($"Sending notification {notification} to topic {sub.Topic}");
+				List<WebSocket> conList = this.connections.GetTopicConnections(sub.Topic, notification.Event.HubEvent);
+				int conCount = conList.Count;
 				if (conCount == 0)
 				{
-					this.logger.LogError($"Websocket connection not found for topic: {sub.Topic}");
+					this.logger.LogError($"Websocket connection not found for topic {sub.Topic}, event {notification.Event.HubEvent}");
 				}
 				else
 				{
 					this.logger.LogInformation($"Sending notification {conCount} websockets...");
-					foreach (WebSocket ws in connections)
+					foreach (WebSocket ws in conList)
 					{
 						WebSocketMessage wsMessage = new WebSocketMessage
 						{
-							Header = { },
 							Body = new MessageBody
 							{
 								Timestamp = notification.Timestamp,
@@ -58,10 +57,31 @@ namespace dotnet.FHIR.hub
 								Event = notification.Event
 							}
 						};
-						var buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(wsMessage));
-						var segment = new ArraySegment<byte>(buffer);
-						await ws.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-						this.logger.LogInformation($"Notification sent successfully.");
+						await WebSocketLib.SendStringAsync(ws, JsonConvert.SerializeObject(wsMessage));
+						this.logger.LogInformation($"Notification sent. Awaiting response...");
+						string r = await WebSocketLib.ReceiveStringAsync(ws);
+						WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(r);
+						this.logger.LogInformation($"Notification response:\r\n{ack}");
+						if (null != ack.Headers)
+						{
+							int statusCode = 0;
+							try
+							{
+								statusCode = Convert.ToInt32(ack.Headers["statusCode"]);
+							}
+							catch (Exception)
+							{
+								this.logger.LogWarning($"invalid status code received from endpoint in response to notification to {sub.Channel.Endpoint}");
+							}
+							if (statusCode >= 200 && statusCode < 300)
+							{
+								this.logger.LogDebug("Notification response accepted.");
+							}
+							else
+							{
+								this.logger.LogWarning($"Notification message not accepted.");
+							}
+						}
 					}
 				}
 			}

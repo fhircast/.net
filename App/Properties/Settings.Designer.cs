@@ -110,12 +110,24 @@ namespace dotnet.FHIR.app.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string txtUserName {
+        public string txtTopic {
             get {
-                return ((string)(this["txtUserName"]));
+                return ((string)(this["txtTopic"]));
             }
             set {
-                this["txtUserName"] = value;
+                this["txtTopic"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string txtToken {
+            get {
+                return ((string)(this["txtToken"]));
+            }
+            set {
+                this["txtToken"] = value;
             }
         }
     }
