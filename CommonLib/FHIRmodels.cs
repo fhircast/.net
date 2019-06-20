@@ -107,7 +107,7 @@ namespace dotnet.FHIR.common
 		public NotificationEvent Event { get; set; }
 	}
 
-	public sealed class MessageBody	// at this point, only Notification and intent verification (subscription)
+	public sealed class WebSocketMessage : ModelBase   // at this point, only Notification and intent verification (subscription)
 	{
 		[JsonProperty(PropertyName = "timestamp")]
 		public DateTime Timestamp { get; set; }
@@ -120,14 +120,6 @@ namespace dotnet.FHIR.common
 
 		[JsonProperty(PropertyName = "subscription")]
 		public Subscription Subscription { get; set; }
-	}
-
-	public sealed class WebSocketMessage : ModelBase
-	{
-		[JsonProperty(PropertyName = "headers")]
-		public Dictionary<string, string> Headers { get; set; }
-		[JsonProperty(PropertyName = "body")]
-		public MessageBody Body { get; set; }
 	}
 
 	public sealed class NotificationEvent : ModelBase

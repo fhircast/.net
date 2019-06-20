@@ -2,6 +2,7 @@
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -20,6 +21,10 @@ namespace dotnet.FHIR.hub
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.AddCors(options =>
+			{
+				options.AddPolicy("AllowAnyOrigin", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+			});
 			services.AddMvc();
 			services.AddHangfire(config => config
 				.UseNLogLogProvider()
@@ -37,12 +42,12 @@ namespace dotnet.FHIR.hub
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 		{
+			app.UseCors("AllowAnyOrigin");
 			if (env.IsDevelopment())
 			{
 				app.UseDeveloperExceptionPage();
 			}
-
-			app.UseMvc(); 
+			app.UseMvc();
 			app.UseHangfireServer();
 			app.UseStaticFiles();
 

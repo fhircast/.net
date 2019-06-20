@@ -118,16 +118,16 @@ namespace dotnet.FHIR.app
 					// read intent verification
 					string verification = await WebSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
 					Log($"Websocket connection received intent verification:\r\n{verification}");
-					//TODO: validate response.
-					WebSocketMessage intentAck = new WebSocketMessage
-					{
-						Headers = new Dictionary<string, string>
-						{
-							{ "status", "ACCEPTED" },
-							{ "statusCode", "202" }
-						}
-					};
-					await WebSocketLib.SendStringAsync(_ws, intentAck.ToString());
+					//TODO: further discussionwill be held by FHIRCast team to decide if this is necessary
+					//WebSocketMessage intentAck = new WebSocketMessage
+					//{
+					//	Headers = new Dictionary<string, string>
+					//	{
+					//		{ "status", "ACCEPTED" },
+					//		{ "statusCode", "202" }
+					//	}
+					//};
+					//await WebSocketLib.SendStringAsync(_ws, intentAck.ToString());
 					// set up background socket reader and exit
 					Cursor.Current = Cursors.Default;
 					btnNotify.Enabled = true;
@@ -159,52 +159,49 @@ namespace dotnet.FHIR.app
 			string patientGuid = Guid.NewGuid().ToString();
 			WebSocketMessage notificationMessage = new WebSocketMessage
 			{
-				Body = new MessageBody
-				{ 
-					Timestamp = DateTime.Now,
-					Id = $"TestApp-{Guid.NewGuid().ToString("N")}",
-					Event = new NotificationEvent()
+				Timestamp = DateTime.Now,
+				Id = $"TestApp-{Guid.NewGuid().ToString("N")}",
+				Event = new NotificationEvent()
+				{
+					HubEvent = txtNotEvent.Text,
+					Topic = _topic,
+					Contexts = new Context[]
 					{
-						HubEvent = txtNotEvent.Text,
-						Topic = _topic,
-						Contexts = new Context[]
+						new Context()
 						{
-							new Context()
+							Key = "patient",
+							Resource = new Resource()
 							{
-								Key = "patient",
-								Resource = new Resource()
+								ResourceType = "Patient",
+								Id = patientGuid,
+								Identifier = new Identifier[]
 								{
-									ResourceType = "Patient",
-									Id = patientGuid,
-									Identifier = new Identifier[]
+									new Identifier()
 									{
-										new Identifier()
-										{
-											System = "urn:mrn",
-											Value= txtNotMRN.Text
-										}
+										System = "urn:mrn",
+										Value= txtNotMRN.Text
 									}
 								}
-							},
-							new Context()
+							}
+						},
+						new Context()
+						{
+							Key = "study",
+							Resource = new Resource()
 							{
-								Key = "study",
-								Resource = new Resource()
+								ResourceType = "ImagingStudy",
+								Id = $"Acc-{txtNotAccession.Text}",
+								Identifier = new Identifier[]
 								{
-									ResourceType = "ImagingStudy",
-									Id = $"Acc-{txtNotAccession.Text}",
-									Identifier = new Identifier[]
+									new Identifier()
 									{
-										new Identifier()
-										{
-											System = "urn:accession",
-											Value = txtNotAccession.Text
-										}
-									},
-									Patient = new ResourceReference
-									{
-										Reference = $"patient/{patientGuid}"
+										System = "urn:accession",
+										Value = txtNotAccession.Text
 									}
+								},
+								Patient = new ResourceReference
+								{
+									Reference = $"patient/{patientGuid}"
 								}
 							}
 						}
@@ -265,43 +262,35 @@ namespace dotnet.FHIR.app
 					// it's either an acknowledgement or an event notification, 
 					// but it must have a header and body
 					WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-					if (null != nMessage.Body)
+					NotificationEvent ev = null;
+					if (null != nMessage.Event)
 					{
-						WebSocketMessage wsResponse;
-						// todo: process header
-						NotificationEvent ev = nMessage.Body.Event;
-						if (null != ev)
-						{
-							Log($"Event notification received:\r\n{nMessage}");
-							wsResponse = new WebSocketMessage
-							{
-								Headers = new Dictionary<string, string>
-							{
-								{ "status" , "ACCEPTED" },
-								{ "statusCode", "202" }
-							}
-							};
-						}
-						else
-						{
-							Log($"Invalid event notification received");
-							wsResponse = new WebSocketMessage
-							{
-								Headers = new Dictionary<string, string>
-							{
-								{ "status" , "INVALID" },
-								{ "statusCode", "400" }
-							}
-							};
-						}
-						await WebSocketLib.SendStringAsync(_ws, wsResponse.ToString());
+						ev = nMessage.Event;
+					}
+					if (null != ev)
+					{
+						Log($"Event notification received:\r\n{nMessage}");
 					}
 					else
 					{
-						// should be a response
-						WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-						Log($"Received acknowledgement response:\r\n{socketData}");
+						Log($"Invalid event notification received");
+						// no acks
+						//wsResponse = new WebSocketMessage
+						//{
+						//	Headers = new Dictionary<string, string>
+						//{
+						//	{ "status" , "INVALID" },
+						//	{ "statusCode", "400" }
+						//}
+						//};
 					}
+					//await WebSocketLib.SendStringAsync(_ws, wsResponse.ToString());
+					//else
+					//{
+					//	// should be a response
+					//	WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+					//	Log($"Received acknowledgement response:\r\n{socketData}");
+					//}
 				}
 			}
 			Log("Websocket reader terminated.");
