@@ -1,6 +1,7 @@
 ﻿using dotnet.FHIR.common;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -69,7 +70,7 @@ namespace dotnet.FHIR.hub.Controllers
 				if (sub.Mode == SubscriptionMode.Subscribe)
 				{
 					string guid = Guid.NewGuid().ToString("n");
-					string wsUrl = $"{this.webSocketProtocol}{this.HttpContext.Request.Host}/ws/{sub.Topic}_{guid}";
+					string wsUrl = $"{this.webSocketProtocol}{this.HttpContext.Request.Host}{this.HttpContext.Request.PathBase}/ws/{sub.Topic}_{guid}";
 					sub.Channel.Endpoint = wsUrl;
 					this.subscriptions.AddSubscription(sub);
 					this.logger.LogDebug($"Subscription added pending intent verification. Returning websocket url: {wsUrl}");

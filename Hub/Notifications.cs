@@ -50,38 +50,36 @@ namespace dotnet.FHIR.hub
 					{
 						WebSocketMessage wsMessage = new WebSocketMessage
 						{
-							Body = new MessageBody
-							{
-								Timestamp = notification.Timestamp,
-								Id = notification.Id,
-								Event = notification.Event
-							}
+							Timestamp = notification.Timestamp,
+							Id = notification.Id,
+							Event = notification.Event
 						};
 						await WebSocketLib.SendStringAsync(ws, JsonConvert.SerializeObject(wsMessage));
-						this.logger.LogInformation($"Notification sent. Awaiting response...");
-						string r = await WebSocketLib.ReceiveStringAsync(ws);
-						WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(r);
-						this.logger.LogInformation($"Notification response:\r\n{ack}");
-						if (null != ack.Headers)
-						{
-							int statusCode = 0;
-							try
-							{
-								statusCode = Convert.ToInt32(ack.Headers["statusCode"]);
-							}
-							catch (Exception)
-							{
-								this.logger.LogWarning($"invalid status code received from endpoint in response to notification to {sub.Channel.Endpoint}");
-							}
-							if (statusCode >= 200 && statusCode < 300)
-							{
-								this.logger.LogDebug("Notification response accepted.");
-							}
-							else
-							{
-								this.logger.LogWarning($"Notification message not accepted.");
-							}
-						}
+						this.logger.LogInformation($"Notification sent.");
+						// TODO: replace message acknowledgements with a more comprehensive error handling mechanism
+						//string r = await WebSocketLib.ReceiveStringAsync(ws);
+						//WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(r);
+						//this.logger.LogInformation($"Notification response:\r\n{ack}");
+						//if (null != ack.Headers)
+						//{
+						//	int statusCode = 0;
+						//	try
+						//	{
+						//		statusCode = Convert.ToInt32(ack.Headers["statusCode"]);
+						//	}
+						//	catch (Exception)
+						//	{
+						//		this.logger.LogWarning($"invalid status code received from endpoint in response to notification to {sub.Channel.Endpoint}");
+						//	}
+						//	if (statusCode >= 200 && statusCode < 300)
+						//	{
+						//		this.logger.LogDebug("Notification response accepted.");
+						//	}
+						//	else
+						//	{
+						//		this.logger.LogWarning($"Notification message not accepted.");
+						//	}
+						//}
 					}
 				}
 			}
