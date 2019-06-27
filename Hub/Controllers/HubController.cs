@@ -70,11 +70,11 @@ namespace dotnet.FHIR.hub.Controllers
 				if (sub.Mode == SubscriptionMode.Subscribe)
 				{
 					string guid = Guid.NewGuid().ToString("n");
-					string wsUrl = $"{this.webSocketProtocol}{this.HttpContext.Request.Host}{this.HttpContext.Request.PathBase}/ws/{sub.Topic}_{guid}";
-					sub.Channel.Endpoint = wsUrl;
+					string endpoint = $"{this.webSocketProtocol}{this.HttpContext.Request.Host}{this.HttpContext.Request.PathBase}/ws/{sub.Topic}_{guid}";
+					sub.Channel.Endpoint = endpoint;
 					this.subscriptions.AddSubscription(sub);
-					this.logger.LogDebug($"Subscription added pending intent verification. Returning websocket url: {wsUrl}");
-					return this.Accepted((object)wsUrl);	// Needs to be cast as object so that it is put into the body
+					this.logger.LogDebug($"Subscription added pending intent verification. Returning websocket url: {endpoint}");
+					return this.Accepted((object)endpoint);	// Needs to be cast as object so that it is put into the body
 				}
 				else
 				{

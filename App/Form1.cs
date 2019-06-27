@@ -69,7 +69,7 @@ namespace dotnet.FHIR.app
 			_topic = txtTopic.Text; 
 			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
-			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", txtToken.Text);
+			//request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", txtToken.Text);
 			Dictionary<string, string> hub = new Dictionary<string, string>
 			{
 				{ "hub.channel.type", "websocket" },
@@ -83,7 +83,8 @@ namespace dotnet.FHIR.app
 			{
 				hub.Add("hub.channel.endpoint", _endpoint);
 			}
-			request.Content = new FormUrlEncodedContent(hub);
+			FormUrlEncodedContent enc = new FormUrlEncodedContent(hub);
+			request.Content = enc;
 			response = await client.SendAsync(request);
 			if (!response.IsSuccessStatusCode)
 			{
@@ -259,8 +260,6 @@ namespace dotnet.FHIR.app
 				else
 				{
 					Log($"{len} bytes read - processing message...");
-					// it's either an acknowledgement or an event notification, 
-					// but it must have a header and body
 					WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
 					NotificationEvent ev = null;
 					if (null != nMessage.Event)

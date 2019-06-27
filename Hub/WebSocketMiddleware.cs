@@ -85,7 +85,7 @@ namespace dotnet.FHIR.hub
 					//	}
 					//	if (statusCode >= 200 && statusCode < 300)
 					//	{
-					this.logger.LogDebug("successful intent verification response received.");
+					//this.logger.LogDebug("successful intent verification response received.");
 					this.connections.AddConnection(sub.Channel.Endpoint, ws);
 					//	}
 					//	else

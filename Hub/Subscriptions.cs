@@ -1,7 +1,6 @@
 ﻿using dotnet.FHIR.common;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace dotnet.FHIR.hub
@@ -9,68 +8,69 @@ namespace dotnet.FHIR.hub
 	public class Subscriptions : ISubscriptions
 	{
 		private readonly ILogger<Subscriptions> logger;
-		private ImmutableHashSet<Subscription> subscriptions = ImmutableHashSet<Subscription>.Empty.WithComparer(Subscription.DefaultComparer);
+		private Dictionary<string, Subscription> subscriptions = new Dictionary<string, Subscription>();
 
 		public Subscriptions(ILogger<Subscriptions> logger)
 		{
 			this.logger = logger;
 		}
 
-		public ICollection<Subscription> GetActiveSubscriptions()
+		public List<Subscription> GetActiveSubscriptions()
 		{
-			return this.subscriptions;
+			return this.subscriptions.Values.ToList<Subscription>();
 		}
-		public Subscription GetSubscription(string channelEndpoint)
+		public Subscription GetSubscription(string endpoint)
 		{
-			ICollection<Subscription> subs = this.subscriptions
-				.Where(s => s.Channel.Endpoint.ToLower() == channelEndpoint.ToLower())
-				.ToArray();
-			if (subs != null && subs.Count > 0)
+			string allSubs = "";
+			int i = 1;
+			foreach (string k in this.subscriptions.Keys)
 			{
-				Subscription sub = subs.First();
-				this.logger.LogDebug($"GetSubscription found subscription for endpoint {channelEndpoint}");
-				return sub;
+				allSubs +=$"\r\n{i++}. {k}";
+			}
+			this.logger.LogDebug($"Existing subscription endpoints: {allSubs}");
+			Subscription s = null;
+			this.subscriptions.TryGetValue(endpoint, out s);
+			if (null != s)
+			{
+				this.logger.LogDebug($"FOUND");
+				return s;
 			}
 			else
 			{
-				this.logger.LogDebug($"GetSubscription: did not find subscription for endpoint {channelEndpoint}");
+				this.logger.LogWarning($"NOT FOUND");
 				return null;
 			}
 		}
 
-		public ICollection<Subscription> GetSubscriptions(string topic, string notificationEvent)
+		public List<Subscription> GetSubscriptions(string topic, string notificationEvent)
 		{
 			this.logger.LogDebug($"Finding subscriptions for topic: {topic} and event: {notificationEvent}");
 
-			ICollection <Subscription> subs = this.subscriptions
-				.Where(x => x.Topic == topic)
-				.Where(x => x.Events.Split(',').Contains(notificationEvent))
-				.ToArray();
-			this.logger.LogDebug($"Found {subs.Count} matching subscriptions:");
-			foreach(Subscription s in subs)
-			{
-				this.logger.LogDebug($"Topic: {s.Topic}, Events: {s.Events}, Channel: {s.Channel.Type}, Endpoint: {s.Channel.Endpoint}");
-			}
+			List<Subscription> subs = this.subscriptions.Values
+				.Where(s => s.Topic == topic)
+				.Where(s => s.Events.Split(',').Contains(notificationEvent))
+				.ToList<Subscription>();
+			this.logger.LogDebug($"Found {subs.Count} matching subscriptions");
 			return subs;
 		}
 
 		public void AddSubscription(Subscription subscription)
 		{
 			this.logger.LogInformation($"Adding subscription for topic {subscription.Topic}.");
-			this.subscriptions = this.subscriptions.Add(subscription);
+			string endpoint = subscription.Channel.Type == ChannelType.Websocket ? subscription.Channel.Endpoint : subscription.Callback;
+			this.subscriptions.Add(endpoint, subscription);
 		}
 
-		public void RemoveSubscription(string channelEndpoint)
+		public void RemoveSubscription(string endpoint)
 		{
-			this.logger.LogInformation($"Removing subscription at {channelEndpoint}.");
-			Subscription sub = GetSubscription(channelEndpoint);
-			if (null != sub)
+			this.logger.LogInformation($"Removing subscription at {endpoint}.");
+			if (this.subscriptions.Remove(endpoint))
 			{
-				this.subscriptions = this.subscriptions.Remove(sub);
+				this.logger.LogDebug($"RemoveSubscription: subscription removed for endpoint {endpoint}.");
 			}
 			else
 			{
-				this.logger.LogDebug($"RemoveSubscription: subscription not found for endpoint {channelEndpoint}.");
+				this.logger.LogDebug($"RemoveSubscription: subscription not found for endpoint {endpoint}.");
 			}
 		}
 	}
