@@ -27,7 +27,7 @@ namespace dotnet.FHIR.hub
 			HttpResponseMessage response;
 			if (sub.Channel.Type == ChannelType.Rest)
 			{
-				this.logger.LogInformation($"Sending notification {notification} to callback {sub.Callback}");
+				this.logger.LogInformation($"Sending notification to callback {sub.Callback}");
 				var content = new StringContent(JsonConvert.SerializeObject(notification));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 				var client = new HttpClient();
@@ -36,51 +36,22 @@ namespace dotnet.FHIR.hub
 			}
 			else if (sub.Channel.Type == ChannelType.Websocket)
 			{
-				this.logger.LogInformation($"Sending notification {notification} to topic {sub.Topic}");
-				List<WebSocket> conList = this.connections.GetTopicConnections(sub.Topic, notification.Event.HubEvent);
-				int conCount = conList.Count;
-				if (conCount == 0)
+				this.logger.LogInformation($"Sending notification to websocket endpoint {sub.Channel.Endpoint}");
+				WebSocket ws = connections.GetConnection(sub.Channel.Endpoint);
+				if (null == ws)
 				{
-					this.logger.LogError($"Websocket connection not found for topic {sub.Topic}, event {notification.Event.HubEvent}");
+					this.logger.LogError("websocket connection not found at endpoint.");
 				}
 				else
 				{
-					this.logger.LogInformation($"Sending notification {conCount} websockets...");
-					foreach (WebSocket ws in conList)
+					WebSocketMessage wsMessage = new WebSocketMessage
 					{
-						WebSocketMessage wsMessage = new WebSocketMessage
-						{
-							Timestamp = notification.Timestamp,
-							Id = notification.Id,
-							Event = notification.Event
-						};
-						await WebSocketLib.SendStringAsync(ws, JsonConvert.SerializeObject(wsMessage));
-						this.logger.LogInformation($"Notification sent.");
-						// TODO: replace message acknowledgements with a more comprehensive error handling mechanism
-						//string r = await WebSocketLib.ReceiveStringAsync(ws);
-						//WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(r);
-						//this.logger.LogInformation($"Notification response:\r\n{ack}");
-						//if (null != ack.Headers)
-						//{
-						//	int statusCode = 0;
-						//	try
-						//	{
-						//		statusCode = Convert.ToInt32(ack.Headers["statusCode"]);
-						//	}
-						//	catch (Exception)
-						//	{
-						//		this.logger.LogWarning($"invalid status code received from endpoint in response to notification to {sub.Channel.Endpoint}");
-						//	}
-						//	if (statusCode >= 200 && statusCode < 300)
-						//	{
-						//		this.logger.LogDebug("Notification response accepted.");
-						//	}
-						//	else
-						//	{
-						//		this.logger.LogWarning($"Notification message not accepted.");
-						//	}
-						//}
-					}
+						Timestamp = notification.Timestamp,
+						Id = notification.Id,
+						Event = notification.Event
+					};
+					await WebSocketLib.SendStringAsync(ws, JsonConvert.SerializeObject(wsMessage));
+					this.logger.LogInformation($"Notification sent.");
 				}
 			}
 		}

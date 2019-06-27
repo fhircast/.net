@@ -48,28 +48,5 @@ namespace dotnet.FHIR.hub
 			}
 			return ws;
 		}
-
-		public List<WebSocket> GetTopicConnections(string topic, string notificationEvent)
-		{
-			this.logger.LogDebug($"GetTopicConnections: looking for connections with topic {topic}, event {notificationEvent}.");
-			List<WebSocket> sockets = new List<WebSocket>();
-			ICollection<Subscription> subs = subscriptions.GetSubscriptions(topic, notificationEvent);
-			foreach(Subscription s in subs)
-			{
-				if (s.Channel.Type == "websocket")
-				{
-					WebSocket ws = GetConnection(s.Channel.Endpoint);
-					if (null != ws)
-					{
-						sockets.Add(ws);
-					}
-					else
-					{
-						this.logger.LogWarning($"Websocket for endpoint {s.Channel.Endpoint} not found in list of connections");
-					}
-				}
-			}
-			return sockets;
-		}
 	}
 }
