@@ -27,17 +27,17 @@ namespace dotnet.FHIR.hub
 			{
 				allSubs +=$"\r\n{i++}. {k}";
 			}
-			this.logger.LogDebug($"Existing subscription endpoints: {allSubs}");
+			this.logger.LogDebug($"Getting Subscription for endpoint {endpoint}. Existing subscribed endpoints: {allSubs}");
 			Subscription s = null;
 			this.subscriptions.TryGetValue(endpoint, out s);
 			if (null != s)
 			{
-				this.logger.LogDebug($"FOUND");
+				this.logger.LogDebug($"Subscription FOUND");
 				return s;
 			}
 			else
 			{
-				this.logger.LogWarning($"NOT FOUND");
+				this.logger.LogWarning($"Subscription NOT FOUND");
 				return null;
 			}
 		}

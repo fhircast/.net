@@ -36,8 +36,6 @@
 			this.txtHubUrl = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
-			this.txtToken = new System.Windows.Forms.TextBox();
-			this.label2 = new System.Windows.Forms.Label();
 			this.txtLog = new System.Windows.Forms.TextBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.txtNotMRN = new System.Windows.Forms.TextBox();
@@ -51,16 +49,12 @@
 			this.label7 = new System.Windows.Forms.Label();
 			this.btnClear = new System.Windows.Forms.Button();
 			this.btnCopy = new System.Windows.Forms.Button();
-			this.txtSecret = new System.Windows.Forms.TextBox();
-			this.label9 = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.txtSecret);
-			this.groupBox1.Controls.Add(this.label9);
 			this.groupBox1.Controls.Add(this.txtTopic);
 			this.groupBox1.Controls.Add(this.label4);
 			this.groupBox1.Controls.Add(this.btnSubscribe);
@@ -68,18 +62,16 @@
 			this.groupBox1.Controls.Add(this.txtHubUrl);
 			this.groupBox1.Controls.Add(this.label1);
 			this.groupBox1.Controls.Add(this.label3);
-			this.groupBox1.Controls.Add(this.txtToken);
-			this.groupBox1.Controls.Add(this.label2);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(310, 224);
+			this.groupBox1.Size = new System.Drawing.Size(310, 175);
 			this.groupBox1.TabIndex = 3;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Subscribe";
 			// 
 			// txtTopic
 			// 
-			this.txtTopic.Location = new System.Drawing.Point(75, 127);
+			this.txtTopic.Location = new System.Drawing.Point(73, 81);
 			this.txtTopic.Name = "txtTopic";
 			this.txtTopic.Size = new System.Drawing.Size(231, 20);
 			this.txtTopic.TabIndex = 6;
@@ -87,7 +79,7 @@
 			// label4
 			// 
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(6, 130);
+			this.label4.Location = new System.Drawing.Point(4, 84);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(37, 13);
 			this.label4.TabIndex = 13;
@@ -96,7 +88,7 @@
 			// btnSubscribe
 			// 
 			this.btnSubscribe.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.btnSubscribe.Location = new System.Drawing.Point(229, 189);
+			this.btnSubscribe.Location = new System.Drawing.Point(229, 146);
 			this.btnSubscribe.Name = "btnSubscribe";
 			this.btnSubscribe.Size = new System.Drawing.Size(75, 23);
 			this.btnSubscribe.TabIndex = 10;
@@ -106,7 +98,7 @@
 			// 
 			// txtSubEvents
 			// 
-			this.txtSubEvents.Location = new System.Drawing.Point(75, 155);
+			this.txtSubEvents.Location = new System.Drawing.Point(73, 109);
 			this.txtSubEvents.Name = "txtSubEvents";
 			this.txtSubEvents.Size = new System.Drawing.Size(231, 20);
 			this.txtSubEvents.TabIndex = 8;
@@ -117,49 +109,34 @@
 			this.txtHubUrl.Name = "txtHubUrl";
 			this.txtHubUrl.Size = new System.Drawing.Size(298, 20);
 			this.txtHubUrl.TabIndex = 2;
+			this.txtHubUrl.Text = "https://connect.nuance.com";
 			// 
 			// label1
 			// 
 			this.label1.AutoSize = true;
 			this.label1.Location = new System.Drawing.Point(3, 26);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(231, 13);
+			this.label1.Size = new System.Drawing.Size(204, 13);
 			this.label1.TabIndex = 1;
 			this.label1.Text = "Base hub URL (ex: http://fhirhub.hl7.org):";
 			// 
 			// label3
 			// 
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(6, 158);
+			this.label3.Location = new System.Drawing.Point(4, 112);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(43, 13);
 			this.label3.TabIndex = 5;
 			this.label3.Text = "Events:";
 			// 
-			// txtToken
-			// 
-			this.txtToken.Location = new System.Drawing.Point(75, 71);
-			this.txtToken.Name = "txtToken";
-			this.txtToken.Size = new System.Drawing.Size(231, 20);
-			this.txtToken.TabIndex = 4;
-			// 
-			// label2
-			// 
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(6, 74);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(66, 13);
-			this.label2.TabIndex = 3;
-			this.label2.Text = "Auth Token:";
-			// 
 			// txtLog
 			// 
-			this.txtLog.Location = new System.Drawing.Point(18, 242);
+			this.txtLog.Location = new System.Drawing.Point(12, 209);
 			this.txtLog.Multiline = true;
 			this.txtLog.Name = "txtLog";
 			this.txtLog.ReadOnly = true;
 			this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtLog.Size = new System.Drawing.Size(593, 253);
+			this.txtLog.Size = new System.Drawing.Size(593, 275);
 			this.txtLog.TabIndex = 5;
 			// 
 			// groupBox2
@@ -278,22 +255,6 @@
 			this.btnCopy.UseVisualStyleBackColor = true;
 			this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
 			// 
-			// txtSecret
-			// 
-			this.txtSecret.Location = new System.Drawing.Point(75, 99);
-			this.txtSecret.Name = "txtSecret";
-			this.txtSecret.Size = new System.Drawing.Size(231, 20);
-			this.txtSecret.TabIndex = 15;
-			// 
-			// label9
-			// 
-			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point(6, 102);
-			this.label9.Name = "label9";
-			this.label9.Size = new System.Drawing.Size(41, 13);
-			this.label9.TabIndex = 14;
-			this.label9.Text = "Secret:";
-			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -336,12 +297,8 @@
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.TextBox txtHubUrl;
 		private System.Windows.Forms.Label label1;
-		private System.Windows.Forms.TextBox txtToken;
-		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Button btnClear;
 		private System.Windows.Forms.Button btnCopy;
-		private System.Windows.Forms.TextBox txtSecret;
-		private System.Windows.Forms.Label label9;
 	}
 }
 
