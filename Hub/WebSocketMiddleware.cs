@@ -109,9 +109,15 @@ namespace dotnet.FHIR.hub
 						{
 							this.logger.LogError($"Exception occurred reading from websocket at {sub.Channel.Endpoint}:\r\n{ex.Message}.");
 						}
-						if (string.IsNullOrEmpty(socketData))
+						if (ws.State != WebSocketState.Open)
 						{
-							this.logger.LogDebug($"The websocket reader at {sub.Channel.Endpoint} read an empty packet. Socket state: {ws.State}, CancelRequested: {context.RequestAborted.IsCancellationRequested}, Closing status: {ws.CloseStatus}/{ws.CloseStatusDescription}");
+							this.logger.LogInformation($"Websocket no longer open. State is {ws.State.ToString()}");
+							if (ws.State == WebSocketState.CloseReceived)
+							{
+								this.logger.LogDebug($"Websocket closing...");
+								await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Client requesting close", new CancellationToken());
+								this.logger.LogDebug($"Websocket closed");
+							}
 						}
 						else
 						{
@@ -145,7 +151,7 @@ namespace dotnet.FHIR.hub
 							}
 							else
 							{
-								this.logger.LogDebug($"Event notification received:\r\n{ev}");
+								this.logger.LogDebug($"Event notification received:\r\n{nMessage}");
 								// Forward notifications to Websocket connected subscribers
 								Notification n = null;
 								try

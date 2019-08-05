@@ -23,6 +23,7 @@ namespace dotnet.FHIR.app
 		private BackgroundWorker _webSocketReader;
 		private string _topic = null; 
 		private string _ipaddress = null;
+		const string APPNAME = "TestApp";
 
 		public Form1()
 		{
@@ -34,8 +35,8 @@ namespace dotnet.FHIR.app
 		private async void Form1_Load(object sender, EventArgs e)
 		{
 			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
-			txtToken.Text = Properties.Settings.Default.txtToken;
-			txtSecret.Text = Properties.Settings.Default.txtSecret;
+			//txtToken.Text = Properties.Settings.Default.txtToken;
+			//txtSecret.Text = Properties.Settings.Default.txtSecret;
 			txtTopic.Text = Properties.Settings.Default.txtTopic;
 			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
 			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
@@ -58,8 +59,8 @@ namespace dotnet.FHIR.app
 		{
 			// save subscription parameters
 			Properties.Settings.Default.txtHubUrl = txtHubUrl.Text;
-			Properties.Settings.Default.txtSecret = txtSecret.Text;
-			Properties.Settings.Default.txtToken = txtToken.Text;
+			//Properties.Settings.Default.txtSecret = txtSecret.Text;
+			//Properties.Settings.Default.txtToken = txtToken.Text;
 			Properties.Settings.Default.txtTopic = txtTopic.Text;
 			Properties.Settings.Default.txtSubEvents = txtSubEvents.Text;
 			Properties.Settings.Default.Save();
@@ -76,7 +77,7 @@ namespace dotnet.FHIR.app
 				{ "hub.mode",  btnSubscribe.Text.ToLower()},
 				{ "hub.topic", _topic },
 				{ "hub.events", txtSubEvents.Text },
-				{ "hub.secret", txtSecret.Text },
+				{ "hub.secret", $"{APPNAME}-secret"},
 				{ "hub.lease", "999" },
 			};
 			if (btnSubscribe.Text == "Unsubscribe")
@@ -96,7 +97,7 @@ namespace dotnet.FHIR.app
 				btnSubscribe.Text = "Subscribe";
 				try
 				{
-					await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
+					await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
 					_ws.Dispose();
 				}
 				catch(Exception ex)
@@ -119,17 +120,6 @@ namespace dotnet.FHIR.app
 					// read intent verification
 					string verification = await WebSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
 					Log($"Websocket connection received intent verification:\r\n{verification}");
-					//TODO: further discussionwill be held by FHIRCast team to decide if this is necessary
-					//WebSocketMessage intentAck = new WebSocketMessage
-					//{
-					//	Headers = new Dictionary<string, string>
-					//	{
-					//		{ "status", "ACCEPTED" },
-					//		{ "statusCode", "202" }
-					//	}
-					//};
-					//await WebSocketLib.SendStringAsync(_ws, intentAck.ToString());
-					// set up background socket reader and exit
 					Cursor.Current = Cursors.Default;
 					btnNotify.Enabled = true;
 					_webSocketReader = new BackgroundWorker();
@@ -161,7 +151,7 @@ namespace dotnet.FHIR.app
 			WebSocketMessage notificationMessage = new WebSocketMessage
 			{
 				Timestamp = DateTime.Now,
-				Id = $"TestApp-{Guid.NewGuid().ToString("N")}",
+				Id = $"{APPNAME}-{Guid.NewGuid().ToString("N")}",
 				Event = new NotificationEvent()
 				{
 					HubEvent = txtNotEvent.Text,
@@ -211,6 +201,7 @@ namespace dotnet.FHIR.app
 			};
 			string json = notificationMessage.ToString();
 			byte[] bytes = Encoding.ASCII.GetBytes(json);
+			Log($"Sending notification for {txtNotEvent.Text} event...");
 			await _ws.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 			//TODO: process acknowledgement response
 		}
@@ -238,27 +229,14 @@ namespace dotnet.FHIR.app
 				catch (Exception ex)
 				{
 					Log($"Error reading websocket: {ex.Message}.");
-					break;
 				}
-				int len = null == socketData ? 0 : socketData.Length;
-				if (string.IsNullOrEmpty(socketData))
+				if (_ws.State != WebSocketState.Open)
 				{
-					Log($"Websocket read empty packet. State: {_ws.State}, Closing status: {_ws.CloseStatus}/{_ws.CloseStatusDescription}.");
-					//try
-					//{
-					//	_ws.Dispose();
-					//}
-					//catch (Exception ex)
-					//{
-					//	Log($"An error occurred disposing the websocket: {ex.Message}");
-					//}
-					//finally
-					//{
-						_ws = null;
-					//}
+					Log($"Websocket no longer open. State is {_ws.State.ToString()}");
 				}
 				else
 				{
+					int len = null == socketData ? 0 : socketData.Length;
 					Log($"{len} bytes read - processing message...");
 					WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
 					NotificationEvent ev = null;
@@ -273,23 +251,7 @@ namespace dotnet.FHIR.app
 					else
 					{
 						Log($"Invalid event notification received");
-						// no acks
-						//wsResponse = new WebSocketMessage
-						//{
-						//	Headers = new Dictionary<string, string>
-						//{
-						//	{ "status" , "INVALID" },
-						//	{ "statusCode", "400" }
-						//}
-						//};
 					}
-					//await WebSocketLib.SendStringAsync(_ws, wsResponse.ToString());
-					//else
-					//{
-					//	// should be a response
-					//	WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-					//	Log($"Received acknowledgement response:\r\n{socketData}");
-					//}
 				}
 			}
 			Log("Websocket reader terminated.");

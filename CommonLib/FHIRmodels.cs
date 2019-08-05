@@ -10,9 +10,9 @@ namespace dotnet.FHIR.common
 	#region string constants classes
 	public sealed class HubEventType
 	{
-		public static readonly string OpenImagingStudy = "open-imaging-study";
-		public static readonly string SwitchImagingStudy = "switch-imaging-study";
-		public static readonly string CloseImagingStudy = "close-imaging-study";
+		public static readonly string OpenImagingStudy = "imagingstudy-open";
+		public static readonly string SwitchImagingStudy = "imagingstudy-switch";
+		public static readonly string CloseImagingStudy = "imagingstudy-close";
 		public static readonly string UserLogout = "user-logout";
 	}
 

@@ -27,7 +27,7 @@ namespace dotnet.FHIR.hub
 			HttpResponseMessage response;
 			if (sub.Channel.Type == ChannelType.Rest)
 			{
-				this.logger.LogInformation($"Sending notification to callback {sub.Callback}");
+				this.logger.LogInformation($"Sending notification to Rest client at {sub.Callback}:\r\n{notification}");
 				var content = new StringContent(JsonConvert.SerializeObject(notification));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 				var client = new HttpClient();
@@ -51,7 +51,7 @@ namespace dotnet.FHIR.hub
 						Event = notification.Event
 					};
 					await WebSocketLib.SendStringAsync(ws, JsonConvert.SerializeObject(wsMessage));
-					this.logger.LogInformation($"Notification sent.");
+					this.logger.LogInformation($"Notification sent:\r\n{wsMessage}");
 				}
 			}
 		}
