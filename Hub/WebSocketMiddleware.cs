@@ -57,7 +57,8 @@ namespace dotnet.FHIR.hub
 				{
 					WebSocket ws = await context.WebSockets.AcceptWebSocketAsync();
 					this.logger.LogInformation($"Accepted websocket connection requested from {sub.Channel.Endpoint}; topic:{sub.Topic}.");
-					// echo back hub subscription to client as verification intent
+					// echo back hub subscription to client as verification intent 
+					// ***** This step may soon be removed from the spec
 					WebSocketMessage vMessage = new WebSocketMessage()
 					{
 						Timestamp = DateTime.Now,
@@ -66,35 +67,7 @@ namespace dotnet.FHIR.hub
 					};
 					this.logger.LogDebug($"Sending intent verification to {sub.Channel.Endpoint}:\r\n{vMessage}.");
 					await WebSocketLib.SendStringAsync(ws, vMessage.ToString());
-					// no more acks/nacks
-					//// get acknowledgement
-					//this.logger.LogDebug("Intent verification sent. Waiting for response..");
-					//string socketData = await WebSocketLib.ReceiveStringAsync(ws);
-					//WebSocketMessage ack = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-					//this.logger.LogDebug($"Intent verification response received from {sub.Channel.Endpoint}:\r\n{ack}");
-					//if (null != ack.Headers)
-					//{
-					//	int statusCode = 0;
-					//	try
-					//	{
-					//		statusCode = Convert.ToInt32(ack.Headers["statusCode"]);
-					//	}
-					//	catch(Exception)
-					//	{
-					//		this.logger.LogWarning($"invalid status code received from endpoint in response to intent verification at {sub.Channel.Endpoint}");
-					//	}
-					//	if (statusCode >= 200 && statusCode < 300)
-					//	{
-					//this.logger.LogDebug("successful intent verification response received.");
 					this.connections.AddConnection(sub.Channel.Endpoint, ws);
-					//	}
-					//	else
-					//	{
-					//		this.logger.LogWarning($"Intent verification not accepted. Removing subscription and closing websocket.");
-					//		this.subscriptions.RemoveSubscription(sub.Channel.Endpoint);
-					//		ws.Dispose();
-					//	}
-					//}
 					// Loop here until the socket is disconnected - reading and handling
 					// each message sent by the client
 					while (ws.State == WebSocketState.Open && !context.RequestAborted.IsCancellationRequested)
@@ -131,14 +104,6 @@ namespace dotnet.FHIR.hub
 								this.logger.LogError($"The websocket reader at {sub.Channel.Endpoint} received an invalid event notification message:\r\n{socketData}");
 								continue;
 							}
-							//WebSocketMessage response = new WebSocketMessage
-							//{
-							//	Headers = new Dictionary<string, string>
-							//	{
-							//		{ "status" , "OK" },
-							//		{ "statusCode", "200" }
-							//	}
-							//};
 							NotificationEvent ev = null;
 							if (null != nMessage.Event)
 							{
@@ -166,14 +131,6 @@ namespace dotnet.FHIR.hub
 								catch (Exception ex)
 								{
 									this.logger.LogError($"Unexpected exception processing inbound notification event:\r\n{ex.ToString()}");
-									//response = new WebSocketMessage
-									//{
-									//	Headers = new Dictionary<string, string>
-									//	{
-									//		{ "Status" , "INVALID" },
-									//		{ "StatusCode", "400" }
-									//	}
-									//};
 									continue;
 								}
 								var subs = this.subscriptions.GetSubscriptions(ev.Topic, ev.HubEvent);
