@@ -35,8 +35,6 @@ namespace dotnet.FHIR.app
 		private async void Form1_Load(object sender, EventArgs e)
 		{
 			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
-			//txtToken.Text = Properties.Settings.Default.txtToken;
-			//txtSecret.Text = Properties.Settings.Default.txtSecret;
 			txtTopic.Text = Properties.Settings.Default.txtTopic;
 			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
 			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
@@ -59,8 +57,6 @@ namespace dotnet.FHIR.app
 		{
 			// save subscription parameters
 			Properties.Settings.Default.txtHubUrl = txtHubUrl.Text;
-			//Properties.Settings.Default.txtSecret = txtSecret.Text;
-			//Properties.Settings.Default.txtToken = txtToken.Text;
 			Properties.Settings.Default.txtTopic = txtTopic.Text;
 			Properties.Settings.Default.txtSubEvents = txtSubEvents.Text;
 			Properties.Settings.Default.Save();
