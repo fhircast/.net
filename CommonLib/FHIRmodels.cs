@@ -140,7 +140,7 @@ namespace dotnet.FHIR.common
 		public string Key { get; set; }
 
 		[JsonProperty(PropertyName = "resource")]
-		public Resource Resource { get; set; }
+		public Resource[] Resources { get; set; }
 	}
 
 	// Can be a Patient Resource or ImagingStudy resource

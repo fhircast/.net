@@ -72,7 +72,6 @@ namespace dotnet.FHIR.hub
 					// each message sent by the client
 					while (ws.State == WebSocketState.Open && !context.RequestAborted.IsCancellationRequested)
 					{
-						//TODO: figure out how to gracefully handle socket closures.
 						string socketData = null;
 						try
 						{
@@ -85,6 +84,7 @@ namespace dotnet.FHIR.hub
 						if (ws.State != WebSocketState.Open)
 						{
 							this.logger.LogInformation($"Websocket no longer open. State is {ws.State.ToString()}");
+							// gracefully handle aborted and intionally terminated websocket conections
 							if (ws.State == WebSocketState.CloseReceived)
 							{
 								this.logger.LogDebug($"Websocket closing...");
