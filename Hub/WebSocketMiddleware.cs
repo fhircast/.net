@@ -94,52 +94,54 @@ namespace dotnet.FHIR.hub
 						}
 						else
 						{
-							WebSocketMessage nMessage = null;
-							try
-							{
-								nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
-							}
-							catch(Exception)
-							{
-								this.logger.LogError($"The websocket reader at {sub.Channel.Endpoint} received an invalid event notification message:\r\n{socketData}");
-								continue;
-							}
-							NotificationEvent ev = null;
-							if (null != nMessage.Event)
-							{
-								// process message, it can only be a event notification 
-								ev = nMessage.Event;
-							}
-							if (null == ev)
-							{
-								this.logger.LogError($"Received invalid event notification message:\r\n{socketData}");
-							}
-							else
-							{
-								this.logger.LogDebug($"Event notification received:\r\n{nMessage}");
-								// Forward notifications to Websocket connected subscribers
-								Notification n = null;
-								try
-								{
-									n = new Notification
-									{
-										Timestamp = nMessage.Timestamp,
-										Id = nMessage.Id,
-										Event = ev
-									};
-								}
-								catch (Exception ex)
-								{
-									this.logger.LogError($"Unexpected exception processing inbound notification event:\r\n{ex.ToString()}");
-									continue;
-								}
-								var subs = this.subscriptions.GetSubscriptions(ev.Topic, ev.HubEvent);
-								foreach (var s in subs)
-								{
-									await notifications.SendNotification(n, s);
-								}
-							}
-							//await WebSocketLib.SendStringAsync(ws, response.ToString()); // todo: process response
+							// the following code is old and no longer supported as per the specifications since
+							// only outbound notifications (hub->client) are allowed over the websocket channel. Clients 
+							// are required to use the REST interface to POST events to the hub
+							//WebSocketMessage nMessage = null;
+							//try
+							//{
+							//	nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+							//}
+							//catch(Exception)
+							//{
+							//	this.logger.LogError($"The websocket reader at {sub.Channel.Endpoint} received an invalid event notification message:\r\n{socketData}");
+							//	continue;
+							//}
+							//NotificationEvent ev = null;
+							//if (null != nMessage.Event)
+							//{
+							//	// process message, it can only be a event notification 
+							//	ev = nMessage.Event;
+							//}
+							//if (null == ev)
+							//{
+							//	this.logger.LogError($"Received invalid event notification message:\r\n{socketData}");
+							//}
+							//else
+							//{
+							//	this.logger.LogDebug($"Event notification received:\r\n{nMessage}");
+							//	// Forward notifications to Websocket connected subscribers
+							//	Notification n = null;
+							//	try
+							//	{
+							//		n = new Notification
+							//		{
+							//			Timestamp = nMessage.Timestamp,
+							//			Id = nMessage.Id,
+							//			Event = ev
+							//		};
+							//	}
+							//	catch (Exception ex)
+							//	{
+							//		this.logger.LogError($"Unexpected exception processing inbound notification event:\r\n{ex.ToString()}");
+							//		continue;
+							//	}
+							//	var subs = this.subscriptions.GetSubscriptions(ev.Topic, ev.HubEvent);
+							//	foreach (var s in subs)
+							//	{
+							//		await notifications.SendNotification(n, s);
+							//	}
+							//}
 						}
 					}
 					// Remove the subscription and websocket connection if it has not already been done by the hub
