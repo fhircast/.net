@@ -21,7 +21,7 @@ namespace dotnet.FHIR.app
 		private ClientWebSocket _ws = null;
 		private string _endpoint = null;
 		private BackgroundWorker _webSocketReader;
-		private string _topic = null; 
+		private string _topic = null;
 		private string _ipaddress = null;
 		const string APPNAME = "TestApp";
 
@@ -35,6 +35,8 @@ namespace dotnet.FHIR.app
 		private async void Form1_Load(object sender, EventArgs e)
 		{
 			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
+			//txtToken.Text = Properties.Settings.Default.txtToken;
+			//txtSecret.Text = Properties.Settings.Default.txtSecret;
 			txtTopic.Text = Properties.Settings.Default.txtTopic;
 			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
 			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
@@ -63,7 +65,7 @@ namespace dotnet.FHIR.app
 			HttpClient client = new HttpClient();
 			HttpResponseMessage response;
 			//Subscribe/Unsubscribe
-			_topic = txtTopic.Text; 
+			_topic = txtTopic.Text;
 			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
 			//request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", txtToken.Text);
@@ -96,7 +98,7 @@ namespace dotnet.FHIR.app
 					await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
 					_ws.Dispose();
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					Log($"Exception occurred closing the websocket: {ex.Message}");
 				}
@@ -144,7 +146,7 @@ namespace dotnet.FHIR.app
 			// Send notification. NOTE: This is a subset of the data allowed by the Hub.
 			// See FHIRCast specifications. Additional authentication will also be needed
 			string patientGuid = Guid.NewGuid().ToString();
-			WebSocketMessage notificationMessage = new WebSocketMessage
+			Notification notificationMessage = new Notification
 			{
 				Timestamp = DateTime.Now,
 				Id = $"{APPNAME}-{Guid.NewGuid().ToString("N")}",
@@ -157,16 +159,19 @@ namespace dotnet.FHIR.app
 						new Context()
 						{
 							Key = "patient",
-							Resource = new Resource()
+							Resources = new Resource[]
 							{
-								ResourceType = "Patient",
-								Id = patientGuid,
-								Identifier = new Identifier[]
+								new Resource()
 								{
-									new Identifier()
+									ResourceType = "Patient",
+									Id = patientGuid,
+									Identifier = new Identifier[]
 									{
-										System = "urn:mrn",
-										Value= txtNotMRN.Text
+										new Identifier()
+										{
+											System = "urn:mrn",
+											Value= txtNotMRN.Text
+										}
 									}
 								}
 							}
@@ -174,21 +179,24 @@ namespace dotnet.FHIR.app
 						new Context()
 						{
 							Key = "study",
-							Resource = new Resource()
+							Resources = new Resource[]
 							{
-								ResourceType = "ImagingStudy",
-								Id = $"Acc-{txtNotAccession.Text}",
-								Identifier = new Identifier[]
+								new Resource()
 								{
-									new Identifier()
+									ResourceType = "ImagingStudy",
+									Id = $"Acc-{txtNotAccession.Text}",
+									Identifier = new Identifier[]
 									{
-										System = "urn:accession",
-										Value = txtNotAccession.Text
+										new Identifier()
+										{
+											System = "urn:accession",
+											Value = txtNotAccession.Text
+										}
+									},
+									Patient = new ResourceReference
+									{
+										Reference = $"patient/{patientGuid}"
 									}
-								},
-								Patient = new ResourceReference
-								{
-									Reference = $"patient/{patientGuid}"
 								}
 							}
 						}
@@ -196,10 +204,17 @@ namespace dotnet.FHIR.app
 				}
 			};
 			string json = notificationMessage.ToString();
-			byte[] bytes = Encoding.ASCII.GetBytes(json);
+			HttpClient client = new HttpClient();
+			HttpResponseMessage response;
+			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/{_topic}");
+			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
+			request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 			Log($"Sending notification for {txtNotEvent.Text} event...");
-			await _ws.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
-			//TODO: process acknowledgement response
+			response = await client.SendAsync(request);
+			if (!response.IsSuccessStatusCode)
+			{
+				Log($"{btnSubscribe.Text} event notification was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+			}
 		}
 
 		#endregion
