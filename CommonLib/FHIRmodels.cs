@@ -7,15 +7,6 @@ using Newtonsoft.Json;
 
 namespace dotnet.FHIR.common
 {
-	#region string constants classes
-	public sealed class HubEventType
-	{
-		public static readonly string OpenImagingStudy = "imagingstudy-open";
-		public static readonly string SwitchImagingStudy = "imagingstudy-switch";
-		public static readonly string CloseImagingStudy = "imagingstudy-close";
-		public static readonly string UserLogout = "user-logout";
-	}
-
 	public sealed class ChannelType
 	{
 		public static readonly string Rest = "rest-hook";
@@ -27,7 +18,6 @@ namespace dotnet.FHIR.common
 		public static readonly string Subscribe = "subscribe";
 		public static readonly string Unsubscribe = "unsubscribe";
 	}
-	#endregion
 
 	public abstract class ModelBase
 	{
@@ -46,9 +36,6 @@ namespace dotnet.FHIR.common
 		[JsonProperty(PropertyName = "hub.channel")]
 		public Channel Channel { get; set; }
 
-		[JsonIgnore]
-		public string HubURL { get; set; }
-
 		[JsonProperty(PropertyName = "hub.secret")]
 		public string Secret { get; set; }
 
@@ -63,6 +50,12 @@ namespace dotnet.FHIR.common
 
 		[JsonProperty(PropertyName = "hub.events")]
 		public string Events { get; set; }
+
+		//[JsonProperty(PropertyName = "hub.lease_seconds")]
+		public int? LeaseSeconds { get; set; }
+
+		//[JsonIgnore]
+		public TimeSpan? Lease => this.LeaseSeconds.HasValue ? TimeSpan.FromSeconds(this.LeaseSeconds.Value) : (TimeSpan?)null;
 	}
 
 	public sealed class Channel
@@ -72,21 +65,6 @@ namespace dotnet.FHIR.common
 
 		[JsonProperty(PropertyName = "endpoint")]
 		public string Endpoint { get; set; }
-	}
-
-	public abstract class SubscriptionWithLease : Subscription
-	{
-		//[JsonProperty(PropertyName = "hub.lease_seconds")]
-		public int? LeaseSeconds { get; set; }
-
-		//[JsonIgnore]
-		public TimeSpan? Lease => this.LeaseSeconds.HasValue ? TimeSpan.FromSeconds(this.LeaseSeconds.Value) : (TimeSpan?)null;
-	}
-
-	public sealed class SubscriptionVerification : SubscriptionWithLease
-	{
-		//[JsonProperty(PropertyName = "hub.challenge")]
-		public string Challenge { get; set; }
 	}
 
 	public sealed class SubscriptionCancelled : Subscription
@@ -107,21 +85,6 @@ namespace dotnet.FHIR.common
 		public NotificationEvent Event { get; set; }
 	}
 
-	public sealed class WebSocketMessage : ModelBase   // at this point, only Notification and intent verification (subscription)
-	{
-		[JsonProperty(PropertyName = "timestamp")]
-		public DateTime Timestamp { get; set; }
-
-		[JsonProperty(PropertyName = "id")]
-		public string Id { get; set; }
-
-		[JsonProperty(PropertyName = "event")]
-		public NotificationEvent Event { get; set; }
-
-		[JsonProperty(PropertyName = "subscription")]
-		public Subscription Subscription { get; set; }
-	}
-
 	public sealed class NotificationEvent : ModelBase
 	{
 		[JsonProperty(PropertyName = "hub.topic")]
@@ -131,85 +94,16 @@ namespace dotnet.FHIR.common
 		public string HubEvent { get; set; }
 
 		[JsonProperty(PropertyName = "context")]
-		public Context[] Contexts { get; set; }
+		public List<Context> Contexts { get; set; }
 	}
 
-	public sealed class Context : ModelBase
+	public sealed class Context
 	{
 		[JsonProperty(PropertyName = "key")]
 		public string Key { get; set; }
 
 		[JsonProperty(PropertyName = "resource")]
-		public Resource[] Resources { get; set; }
-	}
-
-	// Can be a Patient Resource or ImagingStudy resource
-	// TODO: create subclasses?
-	public sealed class Resource : ModelBase
-	{
-		[JsonProperty(PropertyName = "resourceType")]
-		public string ResourceType { get; set; }
-
-		[JsonProperty(PropertyName = "id")]
-		public string Id { get; set; }
-
-		[JsonProperty(PropertyName = "identifier")]
-		public Identifier[] Identifier { get; set; }
-
-		[JsonProperty(PropertyName = "uid")]
-		public string Uid { get; set; }
-
-		[JsonProperty(PropertyName = "patient")]
-		public ResourceReference Patient { get; set; }
-
-	}
-
-	public class Identifier : ModelBase
-	{
-		[JsonProperty(PropertyName = "use")]
-		public string Use { get; set; }
-
-		[JsonProperty(PropertyName = "type")]
-		public Coding Type { get; set; }
-
-		[JsonProperty(PropertyName = "system")]
-		public string System { get; set; }
-
-		[JsonProperty(PropertyName = "value")]
-		public string Value { get; set; }
-	}
-
-	public sealed class CodeableConcept : ModelBase
-	{
-		[JsonProperty(PropertyName = "coding")]
-		public Coding Coding;
-
-		[JsonProperty(PropertyName = "text")]
-		public Coding Text;
-	}
-
-	public sealed class Coding : ModelBase
-	{
-		[JsonProperty(PropertyName = "system")]
-		public string system { get; set; }
-
-		[JsonProperty(PropertyName = "version")]
-		public string version { get; set; }
-
-		[JsonProperty(PropertyName = "code")]
-		public string Code { get; set; }
-
-		[JsonProperty(PropertyName = "display")]
-		public string Display { get; set; }
-
-		[JsonProperty(PropertyName = "userSelected")]
-		public bool UserSelected { get; set; }
-	}
-
-	public sealed class ResourceReference : ModelBase
-	{
-		[JsonProperty(PropertyName = "reference")]
-		public string Reference { get; set; }
+		public object Resource { get; set; }    // FHIR resource  
 	}
 
 	public class SubscriptionComparer : IEqualityComparer<Subscription>
