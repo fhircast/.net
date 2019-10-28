@@ -29,6 +29,7 @@
 		private void InitializeComponent()
 		{
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.chkWS = new System.Windows.Forms.CheckBox();
 			this.txtTopic = new System.Windows.Forms.TextBox();
 			this.label4 = new System.Windows.Forms.Label();
 			this.btnSubscribe = new System.Windows.Forms.Button();
@@ -38,8 +39,6 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.txtLog = new System.Windows.Forms.TextBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
-			this.txtNotMRN = new System.Windows.Forms.TextBox();
-			this.label8 = new System.Windows.Forms.Label();
 			this.txtNotAccession = new System.Windows.Forms.TextBox();
 			this.label5 = new System.Windows.Forms.Label();
 			this.btnNotify = new System.Windows.Forms.Button();
@@ -55,6 +54,7 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.chkWS);
 			this.groupBox1.Controls.Add(this.txtTopic);
 			this.groupBox1.Controls.Add(this.label4);
 			this.groupBox1.Controls.Add(this.btnSubscribe);
@@ -64,16 +64,26 @@
 			this.groupBox1.Controls.Add(this.label3);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(310, 175);
+			this.groupBox1.Size = new System.Drawing.Size(388, 175);
 			this.groupBox1.TabIndex = 3;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Subscribe";
+			// 
+			// chkWS
+			// 
+			this.chkWS.AutoSize = true;
+			this.chkWS.Location = new System.Drawing.Point(92, 146);
+			this.chkWS.Name = "chkWS";
+			this.chkWS.Size = new System.Drawing.Size(103, 17);
+			this.chkWS.TabIndex = 13;
+			this.chkWS.Text = "use WebSocket";
+			this.chkWS.UseVisualStyleBackColor = true;
 			// 
 			// txtTopic
 			// 
 			this.txtTopic.Location = new System.Drawing.Point(73, 81);
 			this.txtTopic.Name = "txtTopic";
-			this.txtTopic.Size = new System.Drawing.Size(231, 20);
+			this.txtTopic.Size = new System.Drawing.Size(301, 20);
 			this.txtTopic.TabIndex = 6;
 			// 
 			// label4
@@ -88,7 +98,7 @@
 			// btnSubscribe
 			// 
 			this.btnSubscribe.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.btnSubscribe.Location = new System.Drawing.Point(229, 146);
+			this.btnSubscribe.Location = new System.Drawing.Point(6, 142);
 			this.btnSubscribe.Name = "btnSubscribe";
 			this.btnSubscribe.Size = new System.Drawing.Size(75, 23);
 			this.btnSubscribe.TabIndex = 10;
@@ -100,25 +110,25 @@
 			// 
 			this.txtSubEvents.Location = new System.Drawing.Point(73, 109);
 			this.txtSubEvents.Name = "txtSubEvents";
-			this.txtSubEvents.Size = new System.Drawing.Size(231, 20);
+			this.txtSubEvents.Size = new System.Drawing.Size(301, 20);
 			this.txtSubEvents.TabIndex = 8;
 			// 
 			// txtHubUrl
 			// 
 			this.txtHubUrl.Location = new System.Drawing.Point(6, 45);
 			this.txtHubUrl.Name = "txtHubUrl";
-			this.txtHubUrl.Size = new System.Drawing.Size(298, 20);
+			this.txtHubUrl.Size = new System.Drawing.Size(368, 20);
 			this.txtHubUrl.TabIndex = 2;
-			this.txtHubUrl.Text = "https://connect.nuance.com";
+			this.txtHubUrl.Text = "https://connect.nuancepowerscribe.com/powercast";
 			// 
 			// label1
 			// 
 			this.label1.AutoSize = true;
 			this.label1.Location = new System.Drawing.Point(3, 26);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(204, 13);
+			this.label1.Size = new System.Drawing.Size(354, 13);
 			this.label1.TabIndex = 1;
-			this.label1.Text = "Base hub URL (ex: http://fhirhub.hl7.org):";
+			this.label1.Text = "Base hub URL (ex: https://connect.nuancepowerscribe.com/powercast):";
 			// 
 			// label3
 			// 
@@ -136,13 +146,11 @@
 			this.txtLog.Name = "txtLog";
 			this.txtLog.ReadOnly = true;
 			this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtLog.Size = new System.Drawing.Size(593, 275);
+			this.txtLog.Size = new System.Drawing.Size(711, 275);
 			this.txtLog.TabIndex = 5;
 			// 
 			// groupBox2
 			// 
-			this.groupBox2.Controls.Add(this.txtNotMRN);
-			this.groupBox2.Controls.Add(this.label8);
 			this.groupBox2.Controls.Add(this.txtNotAccession);
 			this.groupBox2.Controls.Add(this.label5);
 			this.groupBox2.Controls.Add(this.btnNotify);
@@ -150,34 +158,18 @@
 			this.groupBox2.Controls.Add(this.label6);
 			this.groupBox2.Controls.Add(this.txtNotTopic);
 			this.groupBox2.Controls.Add(this.label7);
-			this.groupBox2.Location = new System.Drawing.Point(328, 12);
+			this.groupBox2.Location = new System.Drawing.Point(406, 12);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(277, 175);
+			this.groupBox2.Size = new System.Drawing.Size(317, 175);
 			this.groupBox2.TabIndex = 10;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Notify";
-			// 
-			// txtNotMRN
-			// 
-			this.txtNotMRN.Location = new System.Drawing.Point(62, 104);
-			this.txtNotMRN.Name = "txtNotMRN";
-			this.txtNotMRN.Size = new System.Drawing.Size(199, 20);
-			this.txtNotMRN.TabIndex = 18;
-			// 
-			// label8
-			// 
-			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(6, 107);
-			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size(35, 13);
-			this.label8.TabIndex = 23;
-			this.label8.Text = "MRN:";
 			// 
 			// txtNotAccession
 			// 
 			this.txtNotAccession.Location = new System.Drawing.Point(62, 78);
 			this.txtNotAccession.Name = "txtNotAccession";
-			this.txtNotAccession.Size = new System.Drawing.Size(199, 20);
+			this.txtNotAccession.Size = new System.Drawing.Size(249, 20);
 			this.txtNotAccession.TabIndex = 16;
 			// 
 			// label5
@@ -192,8 +184,7 @@
 			// btnNotify
 			// 
 			this.btnNotify.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnNotify.Enabled = false;
-			this.btnNotify.Location = new System.Drawing.Point(196, 146);
+			this.btnNotify.Location = new System.Drawing.Point(236, 146);
 			this.btnNotify.Name = "btnNotify";
 			this.btnNotify.Size = new System.Drawing.Size(75, 23);
 			this.btnNotify.TabIndex = 20;
@@ -205,7 +196,7 @@
 			// 
 			this.txtNotEvent.Location = new System.Drawing.Point(62, 52);
 			this.txtNotEvent.Name = "txtNotEvent";
-			this.txtNotEvent.Size = new System.Drawing.Size(199, 20);
+			this.txtNotEvent.Size = new System.Drawing.Size(249, 20);
 			this.txtNotEvent.TabIndex = 14;
 			// 
 			// label6
@@ -221,9 +212,8 @@
 			// 
 			this.txtNotTopic.Location = new System.Drawing.Point(62, 26);
 			this.txtNotTopic.Name = "txtNotTopic";
-			this.txtNotTopic.Size = new System.Drawing.Size(199, 20);
+			this.txtNotTopic.Size = new System.Drawing.Size(249, 20);
 			this.txtNotTopic.TabIndex = 12;
-			this.txtNotTopic.Visible = false;
 			// 
 			// label7
 			// 
@@ -233,7 +223,6 @@
 			this.label7.Size = new System.Drawing.Size(37, 13);
 			this.label7.TabIndex = 3;
 			this.label7.Text = "Topic:";
-			this.label7.Visible = false;
 			// 
 			// btnClear
 			// 
@@ -259,7 +248,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(616, 535);
+			this.ClientSize = new System.Drawing.Size(735, 535);
 			this.Controls.Add(this.btnCopy);
 			this.Controls.Add(this.btnClear);
 			this.Controls.Add(this.groupBox2);
@@ -289,8 +278,6 @@
 		private System.Windows.Forms.Label label6;
 		private System.Windows.Forms.TextBox txtNotTopic;
 		private System.Windows.Forms.Label label7;
-		private System.Windows.Forms.TextBox txtNotMRN;
-		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.TextBox txtNotAccession;
 		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.TextBox txtTopic;
@@ -299,6 +286,7 @@
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Button btnClear;
 		private System.Windows.Forms.Button btnCopy;
+		private System.Windows.Forms.CheckBox chkWS;
 	}
 }
 

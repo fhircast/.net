@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Net.Http;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,9 +22,14 @@ namespace dotnet.FHIR.app
 		private ClientWebSocket _ws = null;
 		private string _endpoint = null;
 		private BackgroundWorker _webSocketReader;
+		private BackgroundWorker _callbackReader;
 		private string _topic = null;
 		private string _ipaddress = null;
+		private HttpListener _listener;
+
 		const string APPNAME = "TestApp";
+		const string CLIENT_KEY = "skJxyHANXWjQpkbvg5SYqz9iyEyj9A0I";
+		const string SECRET = "SeCreT";
 
 		public Form1()
 		{
@@ -32,27 +38,28 @@ namespace dotnet.FHIR.app
 
 		#region UI Events
 
-		private async void Form1_Load(object sender, EventArgs e)
+		private void Form1_Load(object sender, EventArgs e)
 		{
 			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
-			//txtToken.Text = Properties.Settings.Default.txtToken;
-			//txtSecret.Text = Properties.Settings.Default.txtSecret;
 			txtTopic.Text = Properties.Settings.Default.txtTopic;
 			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
 			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
 			txtNotEvent.Text = Properties.Settings.Default.txtNotEvent;
 			txtNotAccession.Text = Properties.Settings.Default.txtNotAccession;
-			txtNotMRN.Text = Properties.Settings.Default.txtNotMRN;
-			// get Ip address of this client
-			UriBuilder urlBuilder = new UriBuilder("http://checkip.dyndns.org");
-			HttpClient client = new HttpClient();
-			var request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
-			HttpResponseMessage response = await client.SendAsync(request);
-			string responseText = await response.Content.ReadAsStringAsync();
-			string[] a = responseText.Split(':');
-			string a2 = a[1].Substring(1);
-			string[] a3 = a2.Split('<');
-			_ipaddress = a3[0];
+			_ipaddress = GetLocalIPAddress();
+		}
+
+		public static string GetLocalIPAddress()
+		{
+			var host = Dns.GetHostEntry(Dns.GetHostName());
+			foreach (var ip in host.AddressList)
+			{
+				if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+				{
+					return ip.ToString();
+				}
+			}
+			throw new Exception("No network adapters with an IPv4 address in the system!");
 		}
 
 		private async void btnSubscribe_Click(object sender, EventArgs e)
@@ -65,20 +72,32 @@ namespace dotnet.FHIR.app
 			HttpClient client = new HttpClient();
 			HttpResponseMessage response;
 			//Subscribe/Unsubscribe
+			string mode = btnSubscribe.Text.ToLower();
 			_topic = txtTopic.Text;
 			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
-			//request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", txtToken.Text);
+			request.Headers.Authorization = new AuthenticationHeaderValue("key", CLIENT_KEY);
 			Dictionary<string, string> hub = new Dictionary<string, string>
 			{
-				{ "hub.channel.type", "websocket" },
-				{ "hub.mode",  btnSubscribe.Text.ToLower()},
+				{ "hub.channel.type", chkWS.Checked ? "websocket" : "rest-hook" },
+				{ "hub.callback", chkWS.Checked ? "" : $"http://{_ipaddress}:6000" },
+				{ "hub.mode",  mode},
 				{ "hub.topic", _topic },
 				{ "hub.events", txtSubEvents.Text },
-				{ "hub.secret", $"{APPNAME}-secret"},
+				{ "hub.secret", SECRET },
 				{ "hub.lease", "999" },
 			};
-			if (btnSubscribe.Text == "Unsubscribe")
+			if (mode == "subscribe")
+			{
+				if (!chkWS.Checked)
+				{
+					// set up callback reader before sending request
+					_callbackReader = new BackgroundWorker();
+					_callbackReader.DoWork += _callbackReader_DoWork;
+					_callbackReader.RunWorkerAsync();
+				}
+			}
+			else
 			{
 				hub.Add("hub.channel.endpoint", _endpoint);
 			}
@@ -89,48 +108,56 @@ namespace dotnet.FHIR.app
 			{
 				Log($"{btnSubscribe.Text} request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
 			}
-			else if (btnSubscribe.Text == "Unsubscribe")
-			{
-				Log($"{btnSubscribe.Text} request was accepted. Closing web socket and terminating background thread.");
-				btnSubscribe.Text = "Subscribe";
-				try
-				{
-					await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
-					_ws.Dispose();
-				}
-				catch (Exception ex)
-				{
-					Log($"Exception occurred closing the websocket: {ex.Message}");
-				}
-				_endpoint = null;
-			}
 			else
 			{
-				_endpoint = await response.Content.ReadAsStringAsync();
-				Log($"Hub returned websocket URL: {_endpoint}");
-				// Connect to websocket
-				try
+				if (btnSubscribe.Text == "Unsubscribe")
 				{
-					Cursor.Current = Cursors.WaitCursor;
-					Log($"Connecting to Hub Websocket: {_endpoint}");
-					_ws = new ClientWebSocket();
-					await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
-					// read intent verification
-					string verification = await WebSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
-					Log($"Websocket connection received intent verification:\r\n{verification}");
-					Cursor.Current = Cursors.Default;
-					btnNotify.Enabled = true;
-					_webSocketReader = new BackgroundWorker();
-					_webSocketReader.DoWork += webSocketReader_DoWork;
-					_webSocketReader.RunWorkerAsync();
+					if (chkWS.Checked)
+					{
+						Log($"{btnSubscribe.Text} request was accepted. Closing web socket and terminating background thread.");
+						try
+						{
+							await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
+							_ws.Dispose();
+						}
+						catch (Exception ex)
+						{
+							Log($"Exception occurred closing the websocket: {ex.Message}");
+						}
+						_endpoint = null;
+					}
+					else
+					{
+						_listener.Stop();
+						_listener.Close();
+					}
+					btnSubscribe.Text = "Subscribe";
 				}
-				catch (Exception ex)
+				else // SUBSCRIBE
 				{
-					_ws.Dispose();
-					MessageBox.Show(ex.ToString());
-					return;
+					if (chkWS.Checked)
+					{
+						_endpoint = await response.Content.ReadAsStringAsync();
+						Log($"Hub returned websocket URL: {_endpoint}");
+						// Connect to websocket
+						try
+						{
+							Log($"Connecting to Hub Websocket: {_endpoint}");
+							_ws = new ClientWebSocket();
+							await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
+							_webSocketReader = new BackgroundWorker();
+							_webSocketReader.DoWork += webSocketReader_DoWork;
+							_webSocketReader.RunWorkerAsync();
+						}
+						catch (Exception ex)
+						{
+							_ws.Dispose();
+							MessageBox.Show(ex.ToString());
+							return;
+						}
+						btnSubscribe.Text = "Unsubscribe";
+					}
 				}
-				btnSubscribe.Text = "Unsubscribe";
 			}
 		}
 
@@ -140,11 +167,7 @@ namespace dotnet.FHIR.app
 			Properties.Settings.Default.txtNotTopic = txtNotTopic.Text;
 			Properties.Settings.Default.txtNotEvent = txtNotEvent.Text;
 			Properties.Settings.Default.txtNotAccession = txtNotAccession.Text;
-			Properties.Settings.Default.txtNotMRN = txtNotMRN.Text;
 			Properties.Settings.Default.Save();
-
-			// Send notification. NOTE: This is a subset of the data allowed by the Hub.
-			// See FHIRCast specifications. Additional authentication will also be needed
 			string patientGuid = Guid.NewGuid().ToString();
 			Notification notificationMessage = new Notification
 			{
@@ -153,51 +176,45 @@ namespace dotnet.FHIR.app
 				Event = new NotificationEvent()
 				{
 					HubEvent = txtNotEvent.Text,
-					Topic = _topic,
-					Contexts = new Context[]
+					Topic = txtNotTopic.Text,
+					Contexts = new List<Context>
 					{
 						new Context()
 						{
-							Key = "patient",
-							Resources = new Resource[]
+							Key = "Report",
+							Resource = new 
 							{
-								new Resource()
-								{
-									ResourceType = "Patient",
-									Id = patientGuid,
-									Identifier = new Identifier[]
-									{
-										new Identifier()
-										{
-											System = "urn:mrn",
-											Value= txtNotMRN.Text
-										}
-									}
-								}
+								resourceType = "DiagnosticReport",
+								id = Guid.NewGuid().ToString("N"),
+								status ="unknown"
 							}
 						},
 						new Context()
 						{
-							Key = "study",
-							Resources = new Resource[]
+							Key = "Study",
+							Resource = new 
 							{
-								new Resource()
+								resourceType = "ImagingStudy",
+								id = $"Acc-{txtNotAccession.Text}",
+								identifier = new []
 								{
-									ResourceType = "ImagingStudy",
-									Id = $"Acc-{txtNotAccession.Text}",
-									Identifier = new Identifier[]
+									new 
 									{
-										new Identifier()
+										type = new
 										{
-											System = "urn:accession",
-											Value = txtNotAccession.Text
-										}
-									},
-									Patient = new ResourceReference
-									{
-										Reference = $"patient/{patientGuid}"
+											coding = new []
+											{
+												new
+												{
+													system = "http://terminology.hl7.org/CodeSystem/v2-0203",
+													code = "ACSN"
+												}
+
+											}
+										},
+										value = txtNotAccession.Text
 									}
-								}
+								},
 							}
 						}
 					}
@@ -206,14 +223,15 @@ namespace dotnet.FHIR.app
 			string json = notificationMessage.ToString();
 			HttpClient client = new HttpClient();
 			HttpResponseMessage response;
-			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/{_topic}");
+			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/{txtNotTopic.Text}");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
+			request.Headers.Authorization = new AuthenticationHeaderValue("key", CLIENT_KEY);
 			request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 			Log($"Sending notification for {txtNotEvent.Text} event...");
 			response = await client.SendAsync(request);
 			if (!response.IsSuccessStatusCode)
 			{
-				Log($"{btnSubscribe.Text} event notification was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+				Log($"{txtNotEvent.Text} event notification was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
 			}
 		}
 
@@ -249,7 +267,7 @@ namespace dotnet.FHIR.app
 				{
 					int len = null == socketData ? 0 : socketData.Length;
 					Log($"{len} bytes read - processing message...");
-					WebSocketMessage nMessage = JsonConvert.DeserializeObject<WebSocketMessage>(socketData);
+					Notification nMessage = JsonConvert.DeserializeObject<Notification>(socketData);
 					NotificationEvent ev = null;
 					if (null != nMessage.Event)
 					{
@@ -266,6 +284,111 @@ namespace dotnet.FHIR.app
 				}
 			}
 			Log("Websocket reader terminated.");
+		}
+
+
+		private void _callbackReader_DoWork(object sender, DoWorkEventArgs e)
+		{
+			_listener = new HttpListener();
+			string callbackURL = $"http://{_ipaddress}:6000/";
+			_listener.Prefixes.Add(callbackURL);
+			//NOTE: this requires elevated permissions. Run as administrator, or grant permissions to this user
+			try
+			{
+				_listener.Start();
+			}
+			catch(Exception)
+			{
+				MessageBox.Show("Running this client with a RESTful callback requires elevated permissions. Run as administrator, or grant permissions to this user");
+				return;
+			}
+			Log($"Listening on {callbackURL} for callback...");
+			// The first thing we should get is an intent verification when we attempt to subscribe 
+			HttpListenerContext context = _listener.GetContext();
+			HttpListenerRequest request = context.Request;
+			string challenge = request.QueryString["hub.challenge"];
+			if (null == challenge)
+			{
+				Log("Intent verification failed - no challenge sent. Not subscribed.");
+			}
+			else
+			{
+				Log("Intent verification succeeded - client subscribed.");
+				this.btnSubscribe.Invoke((MethodInvoker)delegate
+				{
+					btnSubscribe.Text = "Unsubscribe";
+				});
+
+				// Respond with the challenge
+				HttpListenerResponse response = context.Response;
+				response.StatusCode = (int)HttpStatusCode.Accepted;
+				var buffer = Encoding.UTF8.GetBytes(challenge);
+				response.ContentLength64 = buffer.Length;
+				response.OutputStream.Write(buffer, 0, buffer.Length);
+
+				// loop here reading and processing notification messages
+				System.IO.Stream body;
+				System.Text.Encoding encoding;
+				System.IO.StreamReader reader;
+				while (true)
+				{
+					try
+					{
+						context = _listener.GetContext();
+					}
+					catch (Exception ex)
+					{
+						Log($"Exception reading callback:\r\n{ex.Message}");
+						break;
+					}
+					request = context.Request;
+					response = context.Response;
+					body = request.InputStream;
+					encoding = request.ContentEncoding;
+					reader = new System.IO.StreamReader(body, encoding);
+					string s = reader.ReadToEnd();
+					if (String.IsNullOrEmpty(s))
+					{
+						Log("Callback received empty message.");
+					}
+					else
+					{
+						JObject o = JObject.Parse(s);
+						string formattedJson = JsonConvert.SerializeObject(o, Formatting.Indented);
+						Log($"Callback received message:\r\n{formattedJson}");
+						Notification nMessage = null;
+						try
+						{
+							nMessage = JsonConvert.DeserializeObject<Notification>(s);
+						}
+						catch (Exception) { }
+						NotificationEvent ev = null;
+						if (null != nMessage && null != nMessage.Event)
+						{
+							ev = nMessage.Event;
+						}
+						if (null != ev)
+						{
+							Log($"Valid event notification received.");
+							response.StatusCode = (int)HttpStatusCode.Accepted;
+							string responseContent = "Accepted";
+							buffer = Encoding.UTF8.GetBytes(responseContent);
+							response.ContentLength64 = buffer.Length;
+							response.OutputStream.Write(buffer, 0, buffer.Length);
+						}
+						else
+						{
+							Log($"Invalid event notification received.");
+							response.StatusCode = (int)HttpStatusCode.BadRequest;
+							string responseContent = "BadRequest";
+							buffer = Encoding.UTF8.GetBytes(responseContent);
+							response.ContentLength64 = buffer.Length;
+							response.OutputStream.Write(buffer, 0, buffer.Length);
+						}
+					}
+				}
+				Log("Callback worker thread terminated.");
+			}
 		}
 
 		private void Log(string message)
