@@ -23,32 +23,27 @@ namespace dotnet.FHIR.hub
 			}
 
 			logger.LogDebug("Verifying sub.");
-			SubscriptionVerification callbackParameters = new SubscriptionVerification
-			{
-				// Note that this is not necessarily cryptographically random/secure.
-				Challenge = Guid.NewGuid().ToString("n"),
-				Callback = sub.Callback,
-				Events = sub.Events,
-				Mode = sub.Mode,
-				Topic = sub.Topic
-			};
+			string challenge = Guid.NewGuid().ToString("n");
+			var callbackUri = new UriBuilder(sub.Callback);
+			callbackUri.Query = $"hub.challenge={challenge}&hub.events={sub.Events}&hub.mode={sub.Mode}&hub.topic={sub.Topic}";
 
-			logger.LogDebug($"Calling callback url: {sub.Callback}");
-			var callbackUri = new SubscriptionCallback().GetCallbackUri(sub);
-			var response = await new HttpClient().GetAsync(callbackUri);
-
+			HttpClient client = new HttpClient();
+			//client.Timeout = TimeSpan.FromSeconds(15);
+			var response = await client.GetAsync(callbackUri.ToString());
+			logger.LogDebug($"Response code from callback url: {response.StatusCode}");
 			if (!response.IsSuccessStatusCode)
 			{
-				logger.LogInformation($"Status code was not success but instead {response.StatusCode}");
+				logger.LogInformation($"Callback failed - Status code: {response.StatusCode}");
 				return ClientValidationOutcome.NotVerified;
 			}
-			var challenge = callbackParameters.Challenge;
 			var responseBody = (await response.Content.ReadAsStringAsync());
+			logger.LogDebug($"Response from challenge: {responseBody}");
 			if (responseBody != challenge)
 			{
 				logger.LogInformation($"Callback result for verification request was not equal to challenge. Response body: '{responseBody}', Challenge: '{challenge}'.");
 				return ClientValidationOutcome.NotVerified;
 			}
+			logger.LogDebug($"Challenge succeeded - intent verified.");
 			return ClientValidationOutcome.Verified;
 		}
 	}
