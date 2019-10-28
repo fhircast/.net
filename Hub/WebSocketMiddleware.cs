@@ -57,17 +57,6 @@ namespace dotnet.FHIR.hub
 				{
 					WebSocket ws = await context.WebSockets.AcceptWebSocketAsync();
 					this.logger.LogInformation($"Accepted websocket connection requested from {sub.Channel.Endpoint}; topic:{sub.Topic}.");
-					// echo back hub subscription to client as verification intent 
-					// ***** This step may soon be removed from the spec
-					WebSocketMessage vMessage = new WebSocketMessage()
-					{
-						Timestamp = DateTime.Now,
-						Id = Guid.NewGuid().ToString("n"),
-						Subscription = sub
-					};
-					this.logger.LogDebug($"Sending intent verification to {sub.Channel.Endpoint}:\r\n{vMessage}.");
-					await WebSocketLib.SendStringAsync(ws, vMessage.ToString());
-					this.connections.AddConnection(sub.Channel.Endpoint, ws);
 					// Loop here until the socket is disconnected - reading and handling
 					// each message sent by the client
 					while (ws.State == WebSocketState.Open && !context.RequestAborted.IsCancellationRequested)
