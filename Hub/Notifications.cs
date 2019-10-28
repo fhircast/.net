@@ -44,7 +44,7 @@ namespace dotnet.FHIR.hub
 				}
 				else
 				{
-					WebSocketMessage wsMessage = new WebSocketMessage
+					Notification wsMessage = new Notification
 					{
 						Timestamp = notification.Timestamp,
 						Id = notification.Id,
