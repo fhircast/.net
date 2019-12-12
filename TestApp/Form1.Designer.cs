@@ -1,4 +1,4 @@
-﻿namespace dotnet.FHIR.app
+﻿namespace dotnet.FHIR.TestApp
 {
 	partial class Form1
 	{
@@ -28,6 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.chkWS = new System.Windows.Forms.CheckBox();
 			this.txtTopic = new System.Windows.Forms.TextBox();
@@ -39,15 +40,12 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.txtLog = new System.Windows.Forms.TextBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
-			this.txtNotAccession = new System.Windows.Forms.TextBox();
-			this.label5 = new System.Windows.Forms.Label();
 			this.btnNotify = new System.Windows.Forms.Button();
-			this.txtNotEvent = new System.Windows.Forms.TextBox();
-			this.label6 = new System.Windows.Forms.Label();
-			this.txtNotTopic = new System.Windows.Forms.TextBox();
-			this.label7 = new System.Windows.Forms.Label();
 			this.btnClear = new System.Windows.Forms.Button();
 			this.btnCopy = new System.Windows.Forms.Button();
+			this.ttAccession = new System.Windows.Forms.ToolTip(this.components);
+			this.txtAccession = new PlaceHolderTextBox();
+			this.txtAccession.PlaceHolderText = "accession number";
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -151,13 +149,8 @@
 			// 
 			// groupBox2
 			// 
-			this.groupBox2.Controls.Add(this.txtNotAccession);
-			this.groupBox2.Controls.Add(this.label5);
+			this.groupBox2.Controls.Add(this.txtAccession);
 			this.groupBox2.Controls.Add(this.btnNotify);
-			this.groupBox2.Controls.Add(this.txtNotEvent);
-			this.groupBox2.Controls.Add(this.label6);
-			this.groupBox2.Controls.Add(this.txtNotTopic);
-			this.groupBox2.Controls.Add(this.label7);
 			this.groupBox2.Location = new System.Drawing.Point(406, 12);
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.Size = new System.Drawing.Size(317, 175);
@@ -165,64 +158,14 @@
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Notify";
 			// 
-			// txtNotAccession
-			// 
-			this.txtNotAccession.Location = new System.Drawing.Point(62, 78);
-			this.txtNotAccession.Name = "txtNotAccession";
-			this.txtNotAccession.Size = new System.Drawing.Size(249, 20);
-			this.txtNotAccession.TabIndex = 16;
-			// 
-			// label5
-			// 
-			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(6, 81);
-			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(36, 13);
-			this.label5.TabIndex = 21;
-			this.label5.Text = "Acc#:";
-			// 
 			// btnNotify
 			// 
-			this.btnNotify.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnNotify.Location = new System.Drawing.Point(236, 146);
+			this.btnNotify.Location = new System.Drawing.Point(6, 26);
 			this.btnNotify.Name = "btnNotify";
-			this.btnNotify.Size = new System.Drawing.Size(75, 23);
-			this.btnNotify.TabIndex = 20;
-			this.btnNotify.Text = "Notify";
-			this.btnNotify.UseVisualStyleBackColor = true;
+			this.btnNotify.Size = new System.Drawing.Size(85, 23);
+			this.btnNotify.TabIndex = 22;
+			this.btnNotify.Text = "Open Report";
 			this.btnNotify.Click += new System.EventHandler(this.btnNotify_Click);
-			// 
-			// txtNotEvent
-			// 
-			this.txtNotEvent.Location = new System.Drawing.Point(62, 52);
-			this.txtNotEvent.Name = "txtNotEvent";
-			this.txtNotEvent.Size = new System.Drawing.Size(249, 20);
-			this.txtNotEvent.TabIndex = 14;
-			// 
-			// label6
-			// 
-			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(4, 55);
-			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(38, 13);
-			this.label6.TabIndex = 5;
-			this.label6.Text = "Event:";
-			// 
-			// txtNotTopic
-			// 
-			this.txtNotTopic.Location = new System.Drawing.Point(62, 26);
-			this.txtNotTopic.Name = "txtNotTopic";
-			this.txtNotTopic.Size = new System.Drawing.Size(249, 20);
-			this.txtNotTopic.TabIndex = 12;
-			// 
-			// label7
-			// 
-			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(4, 29);
-			this.label7.Name = "label7";
-			this.label7.Size = new System.Drawing.Size(37, 13);
-			this.label7.TabIndex = 3;
-			this.label7.Text = "Topic:";
 			// 
 			// btnClear
 			// 
@@ -243,6 +186,13 @@
 			this.btnCopy.Text = "Copy Log";
 			this.btnCopy.UseVisualStyleBackColor = true;
 			this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+			// 
+			// txtAccession
+			// 
+			this.txtAccession.Location = new System.Drawing.Point(97, 28);
+			this.txtAccession.Name = "txtAccession";
+			this.txtAccession.Size = new System.Drawing.Size(214, 20);
+			this.txtAccession.TabIndex = 23;
 			// 
 			// Form1
 			// 
@@ -274,12 +224,6 @@
 		private System.Windows.Forms.TextBox txtLog;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.Button btnNotify;
-		private System.Windows.Forms.TextBox txtNotEvent;
-		private System.Windows.Forms.Label label6;
-		private System.Windows.Forms.TextBox txtNotTopic;
-		private System.Windows.Forms.Label label7;
-		private System.Windows.Forms.TextBox txtNotAccession;
-		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.TextBox txtTopic;
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.TextBox txtHubUrl;
@@ -287,6 +231,9 @@
 		private System.Windows.Forms.Button btnClear;
 		private System.Windows.Forms.Button btnCopy;
 		private System.Windows.Forms.CheckBox chkWS;
+		private System.Windows.Forms.ToolTip ttAccession;
+		private PlaceHolderTextBox txtAccession;
+
 	}
 }
 

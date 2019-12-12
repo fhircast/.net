@@ -14,12 +14,16 @@ using System.Net.WebSockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using dotnet.FHIR.common;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 
-namespace dotnet.FHIR.app
+
+namespace dotnet.FHIR.TestApp
 {
 	public partial class Form1 : Form
 	{
 		private ClientWebSocket _ws = null;
+		private readonly static HttpClient client = new HttpClient();
 		private string _endpoint = null;
 		private BackgroundWorker _webSocketReader;
 		private BackgroundWorker _callbackReader;
@@ -40,12 +44,10 @@ namespace dotnet.FHIR.app
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			txtHubUrl.Text = Properties.Settings.Default.txtHubUrl;
-			txtTopic.Text = Properties.Settings.Default.txtTopic;
-			txtSubEvents.Text = Properties.Settings.Default.txtSubEvents;
-			txtNotTopic.Text = Properties.Settings.Default.txtNotTopic;
-			txtNotEvent.Text = Properties.Settings.Default.txtNotEvent;
-			txtNotAccession.Text = Properties.Settings.Default.txtNotAccession;
+			txtHubUrl.Text = Settings.Default.txtHubUrl;
+			txtTopic.Text = Settings.Default.txtTopic;
+			txtSubEvents.Text = Settings.Default.txtSubEvents;
+			//txtNotAccession.Text = Settings.Default.txtNotAccession;
 			_ipaddress = GetLocalIPAddress();
 		}
 
@@ -65,10 +67,10 @@ namespace dotnet.FHIR.app
 		private async void btnSubscribe_Click(object sender, EventArgs e)
 		{
 			// save subscription parameters
-			Properties.Settings.Default.txtHubUrl = txtHubUrl.Text;
-			Properties.Settings.Default.txtTopic = txtTopic.Text;
-			Properties.Settings.Default.txtSubEvents = txtSubEvents.Text;
-			Properties.Settings.Default.Save();
+			Settings.Default.txtHubUrl = txtHubUrl.Text;
+			Settings.Default.txtTopic = txtTopic.Text;
+			Settings.Default.txtSubEvents = txtSubEvents.Text;
+			Settings.Default.Save();
 			HttpClient client = new HttpClient();
 			HttpResponseMessage response;
 			//Subscribe/Unsubscribe
@@ -161,80 +163,6 @@ namespace dotnet.FHIR.app
 			}
 		}
 
-		private async void btnNotify_Click(object sender, EventArgs e)
-		{
-			// save notify parameters
-			Properties.Settings.Default.txtNotTopic = txtNotTopic.Text;
-			Properties.Settings.Default.txtNotEvent = txtNotEvent.Text;
-			Properties.Settings.Default.txtNotAccession = txtNotAccession.Text;
-			Properties.Settings.Default.Save();
-			string patientGuid = Guid.NewGuid().ToString();
-			Notification notificationMessage = new Notification
-			{
-				Timestamp = DateTime.Now,
-				Id = $"{APPNAME}-{Guid.NewGuid().ToString("N")}",
-				Event = new NotificationEvent()
-				{
-					HubEvent = txtNotEvent.Text,
-					Topic = txtNotTopic.Text,
-					Contexts = new List<Context>
-					{
-						new Context()
-						{
-							Key = "Report",
-							Resource = new 
-							{
-								resourceType = "DiagnosticReport",
-								id = Guid.NewGuid().ToString("N"),
-								status ="unknown"
-							}
-						},
-						new Context()
-						{
-							Key = "Study",
-							Resource = new 
-							{
-								resourceType = "ImagingStudy",
-								id = $"Acc-{txtNotAccession.Text}",
-								identifier = new []
-								{
-									new 
-									{
-										type = new
-										{
-											coding = new []
-											{
-												new
-												{
-													system = "http://terminology.hl7.org/CodeSystem/v2-0203",
-													code = "ACSN"
-												}
-
-											}
-										},
-										value = txtNotAccession.Text
-									}
-								},
-							}
-						}
-					}
-				}
-			};
-			string json = notificationMessage.ToString();
-			HttpClient client = new HttpClient();
-			HttpResponseMessage response;
-			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/{txtNotTopic.Text}");
-			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
-			request.Headers.Authorization = new AuthenticationHeaderValue("key", CLIENT_KEY);
-			request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-			Log($"Sending notification for {txtNotEvent.Text} event...");
-			response = await client.SendAsync(request);
-			if (!response.IsSuccessStatusCode)
-			{
-				Log($"{txtNotEvent.Text} event notification was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
-			}
-		}
-
 		#endregion
 
 		/// <summary>
@@ -297,7 +225,7 @@ namespace dotnet.FHIR.app
 			{
 				_listener.Start();
 			}
-			catch(Exception)
+			catch (Exception)
 			{
 				MessageBox.Show("Running this client with a RESTful callback requires elevated permissions. Run as administrator, or grant permissions to this user");
 				return;
@@ -423,5 +351,86 @@ namespace dotnet.FHIR.app
 		{
 			Clipboard.SetText(txtLog.Text);
 		}
+
+		private void btnNotify_Click(object sender, EventArgs e)
+		{
+			// send DiagnosticReport-open event
+			string accessionNumber = txtAccession.Text;
+			Notification notification = new Notification
+			{
+				Timestamp = DateTime.Now,
+				Id = $"{APPNAME}-{Guid.NewGuid().ToString("N")}",
+				Event = new NotificationEvent()
+				{
+					HubEvent = "DiagnosticReport-open",
+					Topic = _topic,
+					Contexts = new List<Context>
+					{
+						new Context()
+						{
+							Key = "Report",
+							Resource = new DiagnosticReport
+							{
+								Id = Guid.NewGuid().ToString("N"),
+							}
+						},
+						new Context()
+						{
+							Key = "Study",
+							Resource = new ImagingStudy()
+							{
+								Id = accessionNumber,
+								Identifier =
+								{ new Identifier
+									{
+										Type = new CodeableConcept
+										{
+											Coding = new List<Coding>
+											{
+												new Coding
+												{
+													System = "http://terminology.hl7.org/CodeSystem/v2-0203",
+													Code = "ACSN"
+												}
+											}
+										},
+										Value = accessionNumber
+									}
+								}
+							}
+						}
+					}
+				}
+			};
+
+			// send the notification event to the hub
+			_ = SendNotification(notification);
+		}
+
+		private async Task<bool> SendNotification(Notification notification)
+		{
+			// Serialize the notification and send it to the hub
+			JsonSerializerSettings js = new JsonSerializerSettings()
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			};
+			string json = JsonConvert.SerializeObject(notification, Formatting.Indented, js);
+			HttpResponseMessage response;
+			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/api/hub/{_topic}");
+			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
+			request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("key", CLIENT_KEY);
+			request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+			Log($"Sending notification event:\r\n{json}");
+			response = await client.SendAsync(request);
+			if (!response.IsSuccessStatusCode)
+			{
+				Log($"***** Event notification was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+				return false;
+			}
+			else
+				return true;
+		}
+
 	}
+
 }
