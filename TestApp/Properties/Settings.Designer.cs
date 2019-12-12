@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace dotnet.FHIR.app.Properties {
+namespace dotnet.FHIR.TestApp {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
