@@ -1,0 +1,62 @@
+{
+	"timestamp": "2019-09-10T14:58:45.988Z",
+	"id": "0d4c9998",
+	"event": {
+		"hub.topic": "DrXRay",
+		"hub.event": "DiagnosticReport-open",
+		"context": [
+			{
+				"key": "patient",
+				"resource": {
+					"resourceType": "Patient",
+					"id": "ewUbXT9RWEbSj5wPEdgRaBw3",
+					"identifier": [
+						{
+							"system": "urn:oid:1.2.840.114350",
+							"value": "185444"
+						}
+					]
+				}
+			},
+			{
+				"key": "study",
+				"resource": {
+					"resourceType": "ImagingStudy",
+					"description": "CHEST XRAY",
+					"started": "2010-01-30T23:00:00.000Z",
+					"status": "available",
+					"id": "654213456452",
+					"identifier": [
+						{
+							"type": {
+								"coding": [
+									{
+										"system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+										"code": "ACSN"
+									}
+								]
+							},
+							"value": "342123458"
+						}
+					],
+					"patient": {
+						"reference": "Patient/ewUbXT9RWEbSj5wPEdgRaBw3"
+					}
+				}
+			},
+			{
+				"key": "report",
+				"resource": {
+					"resourceType": "DiagnosticReport",
+					"id": "000001",
+					"status": "unknown",
+					"imagingStudy": [
+						{
+							"reference": "ImagingStudy/8i7tbu6fby5ftfbku6fniuf"
+						}
+					]
+				}
+			}
+		]
+	}
+}

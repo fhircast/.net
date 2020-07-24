@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>PowerCast.Common</AssemblyName>
+    <RootNamespace>Nuance.PowerCast.Common</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageTags></PackageTags>
+    <Authors>Nuance.PowerCast.Common</Authors>
+    <Company>Nuance Communications, Inc.</Company>
+    <Product>Nuance PowerCast</Product>
+    <PackageId>Nuance.PowerCast.Common</PackageId>
+    <Description>Common libraries for PowerCast</Description>
+    <Copyright>© 2020 Nuance Communications, Inc. All rights reserved.</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="hl7.fhir.r4" Version="1.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+</Project>

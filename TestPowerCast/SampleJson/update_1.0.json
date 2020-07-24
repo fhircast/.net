@@ -1,0 +1,73 @@
+{
+	"timestamp": "2019-09-10T14:58:55.988Z",
+	"id": "0d4c99980",
+	"event": {
+		"hub.topic": "DrXRay",
+		"hub.event": "DiagnosticReport-update",
+		"context": [
+			{
+				"key": "report",
+				"resource": {
+					"resourceType": "DiagnosticReport",
+					"id": "000001",
+					"meta": {
+						"versionId": "0"
+					}
+				}
+			},
+			{
+				"key": "updates",
+				"resource": {
+					"resourceType": "Bundle",
+					"id": "345345345",
+					"type": "transaction",
+					"entry": [
+						{
+							"request": {
+								"method": "PUT"
+							},
+							"resource": {
+								"resourceType": "DiagnosticReport",
+								"status": "partial",
+								"id": "000001",
+								"imagingStudy": [
+									{
+										"reference": "ImagingStudy/654213456452"
+									},
+									{
+										"reference": "ImagingStudy/342123458"
+									}
+								]
+							}
+						},
+						{
+							"request": {
+								"method": "POST"
+							},
+							"resource": {
+								"resourceType": "ImagingStudy",
+								"description": "CHEST XRAY",
+								"started": "2010-01-30T23:00:00.000Z",
+								"status": "available",
+								"id": "342123458",
+								"identifier": [
+									{
+										"type": {
+											"coding": [
+												{
+													"system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+													"code": "ACSN"
+												}
+											]
+										},
+										"value": "342123458"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

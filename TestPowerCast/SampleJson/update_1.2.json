@@ -1,0 +1,59 @@
+{
+	"timestamp": "2019-09-10T14:59:45.988Z",
+	"id": "0d4c99982",
+	"event": {
+		"hub.topic": "DrXRay",
+		"hub.event": "DiagnosticReport-update",
+		"context": [
+			{
+				"key": "report",
+				"resource": {
+					"resourceType": "DiagnosticReport",
+					"id": "000001",
+					"meta": {
+						"versionId": "2"
+					}
+				}
+			},
+			{
+				"key": "updates",
+				"resource": {
+					"resourceType": "Bundle",
+					"id": "345345345",
+					"type": "transaction",
+					"entry": [
+						{
+							"request": {
+								"method": "PUT"
+							},
+							"resource": {
+								"resourceType": "DiagnosticReport",
+								"status": "partial",
+								"id": "000001",
+								"imagingStudy": [
+									{
+										"reference": "ImagingStudy/654213456452"
+									}
+								],
+								"contains": [
+									{
+										"reference": "Observation/435098234"
+									}
+								]
+							}
+						},
+						{
+							"request": {
+								"method": "DELETE"
+							},
+							"resource": {
+								"resourceType": "ImagingStudy",
+								"id": "342123458"
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}
