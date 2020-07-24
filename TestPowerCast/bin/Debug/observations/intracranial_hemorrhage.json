@@ -1,0 +1,112 @@
+{
+	"resourceType": "Observation",
+	"id": "finding1",
+	"status": "final",
+	"code": {
+		"coding": [
+			{
+				"system": "http://nuancepowerscribe.com/saf",
+				"code": "1024",
+				"display": "Intracranial hemorrhage"
+			},
+			{
+				"system": "http://snomed.info/sct",
+				"code": "1386000",
+				"display": "Intracranial hemorrhage"
+			}
+		]
+	},
+	"bodySite": {
+		"coding": [
+			{
+				"system": "http://www.radlex.org",
+				"code": "RID6390",
+				"display": "Brain region"
+			}
+		]
+	},
+	"note": [
+		{
+			"text": "Intracranial hemorrhage seen on series 4 instance 3 with 92.5% probability."
+		}
+	],
+	"component": [
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://dicom.nema.org/resources/ontology/DCM",
+						"code": "113607",
+						"display": "Series number"
+					}
+				]
+			},
+			"valueString": "4"
+		},
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://dicom.nema.org/resources/ontology/DCM",
+						"code": "112002",
+						"display": "Series UID"
+					}
+				]
+			},
+			"valueString": "2.16.124.113543.6003.2588828330.45298.17418.2723805630"
+		},
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://dicom.nema.org/resources/ontology/DCM",
+						"code": "113609",
+						"display": "Instance number"
+					}
+				]
+			},
+			"valueString": "3"
+		},
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://dicom.nema.org/resources/ontology/DCM",
+						"code": "110181",
+						"display": "SOP Class UID"
+					}
+				]
+			},
+			"valueString": "2.16.124.113543.6003.189642796.63084.16748.2599092903"
+		},
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://nuancepowerscribe.com/ai",
+						"code": "90090301",
+						"display": "Finding Qualifier"
+					}
+				]
+			},
+			"valueString": "present"
+		},
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://nuancepowerscribe.com/ai",
+						"code": "90090302",
+						"display": "Finding Probability"
+					}
+				]
+			},
+			"valueQuantity": {
+				"value": 92.5,
+				"unit": "percent",
+				"system": "http://unitsofmeasure.org"
+			}
+		}
+	]
+}
+
