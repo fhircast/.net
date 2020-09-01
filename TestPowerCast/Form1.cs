@@ -1200,6 +1200,26 @@ namespace Nuance.PowerCast.TestPowerCast
 			UpdateObservation(Bundle.HTTPVerb.DELETE);
 		}
 
+		private void btnUserLogout_Click(object sender, EventArgs e)
+		{
+			// send user-logout event
+			Notification notification = new Notification
+			{
+				Timestamp = DateTime.Now,
+				Id = $"{APPNAME}-{Guid.NewGuid():N}",
+				Event = new NotificationEvent()
+				{
+					HubEvent = "userLogout",
+					Topic = _config.topic,
+					Context = new List<ContextItem>
+					{
+					}
+				}
+			};
+			_ = SendNotification(notification);
+		}
+
 		#endregion
+
 	}
 }
