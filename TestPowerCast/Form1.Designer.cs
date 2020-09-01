@@ -72,6 +72,7 @@
 			this.btnGetConfig = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabUpdateObs = new System.Windows.Forms.TabPage();
+			this.btnDeleteObservation = new System.Windows.Forms.Button();
 			this.btnUpdateObservation = new System.Windows.Forms.Button();
 			this.btnAddObservation = new System.Windows.Forms.Button();
 			this.label9 = new System.Windows.Forms.Label();
@@ -80,7 +81,7 @@
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
 			this.btnOpenLogFolder = new System.Windows.Forms.Button();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-			this.btnDeleteObservation = new System.Windows.Forms.Button();
+			this.btnUserLogout = new System.Windows.Forms.Button();
 			this.tabUpdateStudies.SuspendLayout();
 			this.tabReportOpenClose.SuspendLayout();
 			this.tabSubscribe.SuspendLayout();
@@ -366,6 +367,7 @@
 			// 
 			// tabLogin
 			// 
+			this.tabLogin.Controls.Add(this.btnUserLogout);
 			this.tabLogin.Controls.Add(this.txtLaunchUsername);
 			this.tabLogin.Controls.Add(this.btnLogin);
 			this.tabLogin.Location = new System.Drawing.Point(4, 22);
@@ -521,6 +523,17 @@
 			this.tabUpdateObs.Text = "Observations";
 			this.tabUpdateObs.UseVisualStyleBackColor = true;
 			// 
+			// btnDeleteObservation
+			// 
+			this.btnDeleteObservation.Enabled = false;
+			this.btnDeleteObservation.Location = new System.Drawing.Point(507, 83);
+			this.btnDeleteObservation.Name = "btnDeleteObservation";
+			this.btnDeleteObservation.Size = new System.Drawing.Size(155, 23);
+			this.btnDeleteObservation.TabIndex = 44;
+			this.btnDeleteObservation.Text = "Delete...";
+			this.btnDeleteObservation.UseVisualStyleBackColor = true;
+			this.btnDeleteObservation.Click += new System.EventHandler(this.btnDeleteObservation_Click);
+			// 
 			// btnUpdateObservation
 			// 
 			this.btnUpdateObservation.Enabled = false;
@@ -586,16 +599,16 @@
 			// 
 			this.openFileDialog1.FileName = "openFileDialog1";
 			// 
-			// btnDeleteObservation
+			// btnUserLogout
 			// 
-			this.btnDeleteObservation.Enabled = false;
-			this.btnDeleteObservation.Location = new System.Drawing.Point(507, 83);
-			this.btnDeleteObservation.Name = "btnDeleteObservation";
-			this.btnDeleteObservation.Size = new System.Drawing.Size(155, 23);
-			this.btnDeleteObservation.TabIndex = 44;
-			this.btnDeleteObservation.Text = "Delete...";
-			this.btnDeleteObservation.UseVisualStyleBackColor = true;
-			this.btnDeleteObservation.Click += new System.EventHandler(this.btnDeleteObservation_Click);
+			this.btnUserLogout.Anchor = System.Windows.Forms.AnchorStyles.None;
+			this.btnUserLogout.Location = new System.Drawing.Point(6, 67);
+			this.btnUserLogout.Name = "btnUserLogout";
+			this.btnUserLogout.Size = new System.Drawing.Size(135, 23);
+			this.btnUserLogout.TabIndex = 14;
+			this.btnUserLogout.Text = "User Logout";
+			this.btnUserLogout.UseVisualStyleBackColor = true;
+			this.btnUserLogout.Click += new System.EventHandler(this.btnUserLogout_Click);
 			// 
 			// Form1
 			// 
@@ -683,6 +696,7 @@
 		private System.Windows.Forms.Label label10;
 		private System.Windows.Forms.Button btnDeleteStudy;
 		private System.Windows.Forms.Button btnDeleteObservation;
+		private System.Windows.Forms.Button btnUserLogout;
 	}
 }
 
