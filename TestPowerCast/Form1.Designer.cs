@@ -48,6 +48,9 @@
 			this.btnCloseReport = new System.Windows.Forms.Button();
 			this.btnNotify = new System.Windows.Forms.Button();
 			this.tabSubscribe = new System.Windows.Forms.TabPage();
+			this.txtLeaseSeconds = new System.Windows.Forms.TextBox();
+			this.label12 = new System.Windows.Forms.Label();
+			this.btnUnsubscribe = new System.Windows.Forms.Button();
 			this.txtHubUrl = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.txtTopic = new System.Windows.Forms.TextBox();
@@ -265,6 +268,9 @@
 			// 
 			// tabSubscribe
 			// 
+			this.tabSubscribe.Controls.Add(this.txtLeaseSeconds);
+			this.tabSubscribe.Controls.Add(this.label12);
+			this.tabSubscribe.Controls.Add(this.btnUnsubscribe);
 			this.tabSubscribe.Controls.Add(this.txtHubUrl);
 			this.tabSubscribe.Controls.Add(this.label1);
 			this.tabSubscribe.Controls.Add(this.txtTopic);
@@ -282,12 +288,39 @@
 			this.tabSubscribe.Text = "Subscribe";
 			this.tabSubscribe.UseVisualStyleBackColor = true;
 			// 
+			// txtLeaseSeconds
+			// 
+			this.txtLeaseSeconds.Location = new System.Drawing.Point(505, 15);
+			this.txtLeaseSeconds.Name = "txtLeaseSeconds";
+			this.txtLeaseSeconds.Size = new System.Drawing.Size(45, 20);
+			this.txtLeaseSeconds.TabIndex = 16;
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point(422, 18);
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size(84, 13);
+			this.label12.TabIndex = 30;
+			this.label12.Text = "Lease Seconds:";
+			// 
+			// btnUnsubscribe
+			// 
+			this.btnUnsubscribe.Anchor = System.Windows.Forms.AnchorStyles.None;
+			this.btnUnsubscribe.Location = new System.Drawing.Point(87, 120);
+			this.btnUnsubscribe.Name = "btnUnsubscribe";
+			this.btnUnsubscribe.Size = new System.Drawing.Size(75, 23);
+			this.btnUnsubscribe.TabIndex = 29;
+			this.btnUnsubscribe.Text = "Unsubscribe";
+			this.btnUnsubscribe.UseVisualStyleBackColor = true;
+			this.btnUnsubscribe.Click += new System.EventHandler(this.btnUnsubscribe_Click);
+			// 
 			// txtHubUrl
 			// 
 			this.txtHubUrl.Location = new System.Drawing.Point(72, 15);
 			this.txtHubUrl.Name = "txtHubUrl";
 			this.txtHubUrl.ReadOnly = true;
-			this.txtHubUrl.Size = new System.Drawing.Size(478, 20);
+			this.txtHubUrl.Size = new System.Drawing.Size(344, 20);
 			this.txtHubUrl.TabIndex = 15;
 			// 
 			// label1
@@ -303,7 +336,6 @@
 			// 
 			this.txtTopic.Location = new System.Drawing.Point(72, 42);
 			this.txtTopic.Name = "txtTopic";
-			this.txtTopic.ReadOnly = true;
 			this.txtTopic.Size = new System.Drawing.Size(478, 20);
 			this.txtTopic.TabIndex = 17;
 			// 
@@ -696,6 +728,9 @@
 		private System.Windows.Forms.Label label10;
 		private System.Windows.Forms.Button btnDeleteStudy;
 		private System.Windows.Forms.Button btnDeleteObservation;
+		private System.Windows.Forms.Button btnUnsubscribe;
+		private System.Windows.Forms.TextBox txtLeaseSeconds;
+		private System.Windows.Forms.Label label12;
 		private System.Windows.Forms.Button btnUserLogout;
 	}
 }

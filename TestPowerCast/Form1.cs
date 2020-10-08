@@ -92,6 +92,8 @@ namespace Nuance.PowerCast.TestPowerCast
 			txtMRN.Text = Settings.Default.txtMRN;
 			lvStudies.ItemChecked += LvStudies_ItemChecked;
 			lvObservations.ItemChecked += LvObservations_ItemChecked;
+			FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+			this.Text = $"{fileVersion.ProductName} ({fileVersion.FileVersion})";
 		}
 
 		private async Task<string> GetToken()
@@ -196,9 +198,10 @@ namespace Nuance.PowerCast.TestPowerCast
 						lvStudies.Items.Add(item);
 					});
 				}
-				var observations = CurrentReport?.Contained.FindAll(r => r.ResourceType == ResourceType.Observation).ToList();
-				foreach (Observation obs in observations)
+				var observations = _currentContext.context.FindAll(c => c.Key.ToLower() == "observation");
+				foreach (ContextItem obsItem in observations)
 				{
+					Observation obs = obsItem.Resource.ToObservation();
 					ListViewItem item = new ListViewItem(obs.Id, 0);
 					item.Checked = false;
 					item.SubItems.Add(obs.Status.ToString());
@@ -211,7 +214,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			}
 		}
 
-		private DiagnosticReport CurrentReport
+		private DiagnosticReport CurrentContextualReport
 		{
 			get
 			{
@@ -300,11 +303,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			}
 			else
 			{
-				Display("Intent verification succeeded - client subscribed.");
-				this.btnSubscribe.Invoke((MethodInvoker)delegate
-				{
-					btnSubscribe.Text = "Unsubscribe";
-				});
+				Display("Intent verification in progress. Sending back challenge...");
 
 				// Respond with the challenge
 				HttpListenerResponse response = context.Response;
@@ -402,14 +401,6 @@ namespace Nuance.PowerCast.TestPowerCast
 				tabControl1.SelectedIndex = 0;
 				MessageBox.Show("You must retreive the configuration data before performing other functions");
 			}
-			else
-			{
-				if (!_subscribed && tabControl1.SelectedIndex > 2)
-				{
-					MessageBox.Show("You must subscribe before performing this function.");
-					tabControl1.SelectedIndex = 2;
-				}
-			}
 		}
 
 		private async Task<HttpResponseMessage> SendNotification(Notification notification)
@@ -458,26 +449,45 @@ namespace Nuance.PowerCast.TestPowerCast
 			else
 			{
 				string responseContent = null != response.Content ?  await response.Content.ReadAsStringAsync() : "";
-				var responseObject = new Object();
-				try { responseObject = JsonConvert.DeserializeObject(responseContent); }
-				catch { }
-				Display($"The request was not accepted by the PowerCast Hub. Reason: {((JObject)responseObject)["message"]}");
+				string message = null; 
+				if (!String.IsNullOrEmpty(responseContent))
+				{
+					var responseObject = new Object();
+					try { responseObject = JsonConvert.DeserializeObject(responseContent); }
+					catch { }
+					message = String.Format("The request was not accepted by the PowerCast Hub. Error code: {0} Reason: {1}", response.StatusCode, ((JObject)responseObject)["message"]);
+				}
+				else
+				{
+					message = String.Format("The request was not accepted by the PowerCast Hub. Error code: {0}", response.StatusCode);
+				}
+				Display(message);
 			}
 			return response;
 		}
 
 		#region UI Event Handlers
 
-		private async void btnSubscribe_Click(object sender, EventArgs e)
+		private void btnUnsubscribe_Click(object sender, EventArgs e)
 		{
+			SendSubscribe("unsubscribe");
+		}
+
+		private void btnSubscribe_Click(object sender, EventArgs e)
+		{
+			SendSubscribe("subscribe");
+		}
+
+		private async void SendSubscribe(string mode)
+		{ 
 			// save subscription parameters
 			Settings.Default.txtSubEvents = txtSubEvents.Text;
 			Settings.Default.Save();
 			HttpResponseMessage response;
 			//Subscribe/Unsubscribe
-			string mode = btnSubscribe.Text.ToLower();
 			UriBuilder uriBuilder = new UriBuilder($"{txtHubUrl.Text}");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uriBuilder.Uri);
+			string leaseSeconds = String.IsNullOrEmpty(txtLeaseSeconds.Text) ? "86400" : txtLeaseSeconds.Text;
 			Dictionary<string, string> hub = new Dictionary<string, string>
 			{
 				{ "hub.channel.type", rbWebsocket.Checked ? "websocket" : "rest-hook" },
@@ -486,7 +496,7 @@ namespace Nuance.PowerCast.TestPowerCast
 				{ "hub.topic", txtTopic.Text },
 				{ "hub.events", txtSubEvents.Text },
 				{ "hub.secret", HUB_SECRET },
-				{ "hub.lease_seconds", "999999" },
+				{ "hub.lease_seconds", leaseSeconds },
 			};
 			if (mode == "subscribe")
 			{
@@ -511,8 +521,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			}
 			else
 			{
-				_subscribed = btnSubscribe.Text == "Subscribe";
-				if (btnSubscribe.Text == "Unsubscribe")
+				if (mode == "unsubscribe")
 				{
 					if (rbWebsocket.Checked)
 					{
@@ -533,7 +542,6 @@ namespace Nuance.PowerCast.TestPowerCast
 						_listener.Stop();
 						_listener.Close();
 					}
-					btnSubscribe.Text = "Subscribe";
 				}
 				else // SUBSCRIBE
 				{
@@ -567,7 +575,6 @@ namespace Nuance.PowerCast.TestPowerCast
 							MessageBox.Show(ex.ToString());
 							return;
 						}
-						btnSubscribe.Text = "Unsubscribe";
 					}
 				}
 			}
@@ -742,7 +749,7 @@ namespace Nuance.PowerCast.TestPowerCast
 							Key = "report",
 							Resource = new DiagnosticReport
 							{
-								Id = CurrentReport.Id
+								Id = CurrentContextualReport.Id
 							}
 						}
 					}
@@ -836,9 +843,14 @@ namespace Nuance.PowerCast.TestPowerCast
 
 		private async void btnAddStudy_Click(object sender, EventArgs e)
 		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show("There is no report opened in PowerScribe.");
+				return;
+			}
 			AddStudyForm form = new AddStudyForm();
 			DialogResult result = form.ShowDialog();
-			DiagnosticReport currentReport = CurrentReport; // we'll update this with a reference to the new study
+			DiagnosticReport currentReport = CurrentContextualReport; 
 			if (result == DialogResult.OK)
 			{
 				ImagingStudy study = null;
@@ -859,16 +871,6 @@ namespace Nuance.PowerCast.TestPowerCast
 						Method = Bundle.HTTPVerb.POST
 					},
 					Resource = study
-				});
-				// Add a reference to the new study in the current report
-				currentReport.ImagingStudy.Add(new ResourceReference { Reference = $"ImagingStudy/{study.Id}" });
-				entries.Add(new Bundle.EntryComponent
-				{
-					Request = new Bundle.RequestComponent()
-					{
-						Method = Bundle.HTTPVerb.PUT
-					},
-					Resource = currentReport
 				});
 				Notification notification = new Notification
 				{
@@ -924,7 +926,7 @@ namespace Nuance.PowerCast.TestPowerCast
 
 		private void UpdateStudy(Bundle.HTTPVerb verb)
 		{
-			DiagnosticReport currentReport = CurrentReport;
+			DiagnosticReport currentReport = CurrentContextualReport;
 			Bundle bundle = new Bundle
 			{
 				Id = Guid.NewGuid().ToString("N"),
@@ -967,29 +969,6 @@ namespace Nuance.PowerCast.TestPowerCast
 					}
 				}
 			}
-			if (verb == Bundle.HTTPVerb.DELETE)
-			{
-				// Add the DiagnosticReport to the bundle if there are any changes,
-				// specifically removing any studies that were just DELETED (if any)
-				ResourceReference studyRef = null;
-				foreach (ResourceReference reference in currentReport.ImagingStudy)
-				{
-					if (reference.Reference.EndsWith(study.Id))
-					{
-						studyRef = reference;
-						break;
-					}
-				}
-				if (null != studyRef)
-				{
-					currentReport.ImagingStudy.Remove(studyRef);
-					bundle.Entry.Add(new Bundle.EntryComponent()
-					{
-						Request = new Bundle.RequestComponent() { Method = Bundle.HTTPVerb.PUT },
-						Resource = currentReport
-					});
-				}
-			}
 
 			Notification notification = new Notification
 			{
@@ -1026,6 +1005,11 @@ namespace Nuance.PowerCast.TestPowerCast
 
 		private void btnAddObservation_Click(object sender, EventArgs e)
 		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show("There is no report opened in PowerScribe.");
+				return;
+			}
 			// open file containing json observation
 			openFileDialog1.InitialDirectory = $"{Directory.GetCurrentDirectory()}\\observations";
 			openFileDialog1.Filter = "Json File|*.json|Text File|*.txt";
@@ -1034,7 +1018,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			openFileDialog1.FileName = "";
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 			{
-				DiagnosticReport currentReport = CurrentReport; // we'll add a reference to the new observation in here
+				DiagnosticReport currentReport = CurrentContextualReport; // we'll add a reference to the new observation in here
 				//Read the json and insert it into a bundle.
 				string obsJson = File.ReadAllText(openFileDialog1.FileName);
 				Observation obs;
@@ -1117,7 +1101,7 @@ namespace Nuance.PowerCast.TestPowerCast
 				Type = Bundle.BundleType.Transaction,
 				Entry = new List<Bundle.EntryComponent>()
 			};
-			DiagnosticReport currentReport = CurrentReport;
+			DiagnosticReport currentReport = CurrentContextualReport;
 			Observation obs = null;
 			foreach (ListViewItem obsItem in lvObservations.CheckedItems)
 			{
@@ -1147,19 +1131,6 @@ namespace Nuance.PowerCast.TestPowerCast
 					}
 				}
 			}
-			// Update the current report context with the removed/updated observation 
-			// in the contained field
-			var existingObs = currentReport.Contained.Find(r => r.Id == obs.Id);
-			currentReport.Contained.Remove(existingObs);
-			if (verb == Bundle.HTTPVerb.PUT)
-			{
-				currentReport.Contained.Add(obs);
-			}
-			bundle.Entry.Add(new Bundle.EntryComponent()
-			{
-				Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.PUT },
-				Resource = currentReport
-			});
 			Notification notification = new Notification
 			{
 				Timestamp = DateTime.Now,
@@ -1192,33 +1163,40 @@ namespace Nuance.PowerCast.TestPowerCast
 
 		private void btnUpdateObservation_Click(object sender, EventArgs e)
 		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show("There is no report opened in PowerScribe.");
+				return;
+			}
 			UpdateObservation(Bundle.HTTPVerb.PUT);
 		}
 
 		private void btnDeleteObservation_Click(object sender, EventArgs e)
 		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show("There is no report opened in PowerScribe.");
+				return;
+			}
 			UpdateObservation(Bundle.HTTPVerb.DELETE);
 		}
 
 		private void btnUserLogout_Click(object sender, EventArgs e)
 		{
-			// send user-logout event
+			// send userLogout event
 			Notification notification = new Notification
 			{
 				Timestamp = DateTime.Now,
 				Id = $"{APPNAME}-{Guid.NewGuid():N}",
 				Event = new NotificationEvent()
 				{
-					HubEvent = "userLogout",
+					HubEvent = "userlogout",
 					Topic = _config.topic,
-					Context = new List<ContextItem>
-					{
-					}
+					Context = new List<ContextItem>()
 				}
 			};
 			_ = SendNotification(notification);
 		}
-
 		#endregion
 
 	}
