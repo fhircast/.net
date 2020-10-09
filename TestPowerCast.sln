@@ -7,11 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPowerCast", "TestPowerC
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleJson", "SampleJson", "{85854818-44A9-4C36-9D04-AEAC497C0EFA}"
 	ProjectSection(SolutionItems) = preProject
-		SampleJson\context.json = SampleJson\context.json
-		SampleJson\open_1.json = SampleJson\open_1.json
-		SampleJson\update_1.0.json = SampleJson\update_1.0.json
-		SampleJson\update_1.1.json = SampleJson\update_1.1.json
-		SampleJson\update_1.2.json = SampleJson\update_1.2.json
+		TestPowerCast\SampleJson\context.json = TestPowerCast\SampleJson\context.json
+		TestPowerCast\SampleJson\open_1.json = TestPowerCast\SampleJson\open_1.json
+		TestPowerCast\SampleJson\update_1.0.json = TestPowerCast\SampleJson\update_1.0.json
+		TestPowerCast\SampleJson\update_1.1.json = TestPowerCast\SampleJson\update_1.1.json
+		TestPowerCast\SampleJson\update_1.2.json = TestPowerCast\SampleJson\update_1.2.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerCast.Common", "PowerCast.Common\PowerCast.Common.csproj", "{279BEE5D-031C-4310-BB67-5D67D60578A5}"
