@@ -22,6 +22,7 @@ using Serilog.Events;
 using System.Reflection;
 using System.Diagnostics;
 using Nuance.PowerCast.TestPowerCast.Properties;
+using Subscription = Nuance.PowerCast.Common.Subscription;
 
 namespace Nuance.PowerCast.TestPowerCast
 {
@@ -43,7 +44,6 @@ namespace Nuance.PowerCast.TestPowerCast
 		private readonly string _auth0ClientSecret;
 		private ConfigurationData _config = null;
 		private string _logFilePath = null;
-		private bool _subscribed = false;
 		private HubContext _currentContext = null;
 		private FhirJsonParser _fhirParser = new FhirJsonParser(new ParserSettings { AcceptUnknownMembers = true, AllowUnrecognizedEnums = true, PermissiveParsing = true });
 		private FhirJsonSerializer _fhirSerializer = new FhirJsonSerializer(new SerializerSettings { Pretty = true });
@@ -91,7 +91,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			txtAccession.Text = Settings.Default.txtAccession;
 			txtMRN.Text = Settings.Default.txtMRN;
 			lvStudies.ItemChecked += LvStudies_ItemChecked;
-			lvObservations.ItemChecked += LvObservations_ItemChecked;
+			lvContent.ItemChecked += LvContent_ItemChecked;
 			FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
 			this.Text = $"{fileVersion.ProductName} ({fileVersion.FileVersion})";
 		}
@@ -161,7 +161,7 @@ namespace Nuance.PowerCast.TestPowerCast
 					else 
 					{
 						Log.Information("Event notification received:\r\n{message}", nMessage);
-						Display($"Event notification received: {ev.HubEvent}");
+						Display($"Event notification received:\r\n{nMessage.ToString()}");
 						await GetContext(); // refresh our context - even if we sent the notification
 					}
 				}
@@ -176,9 +176,9 @@ namespace Nuance.PowerCast.TestPowerCast
 			{
 				lvStudies.Items.Clear();
 			});
-			this.lvObservations.Invoke((MethodInvoker)delegate
+			this.lvContent.Invoke((MethodInvoker)delegate
 			{
-				lvObservations.Items.Clear();
+				lvContent.Items.Clear();
 			});
 
 			if (null != _currentContext)
@@ -198,17 +198,17 @@ namespace Nuance.PowerCast.TestPowerCast
 						lvStudies.Items.Add(item);
 					});
 				}
-				var observations = _currentContext.context.FindAll(c => c.Key.ToLower() == "observation");
-				foreach (ContextItem obsItem in observations)
+				var content = _currentContext.context.FindAll(c => c.Key.ToLower() == "observation" || c.Key.ToLower() == "media");
+				foreach (ContextItem contentItem in content)
 				{
-					Observation obs = obsItem.Resource.ToObservation();
-					ListViewItem item = new ListViewItem(obs.Id, 0);
+					DomainResource resource = contentItem.Resource.ToDomainResource();
+					ListViewItem item = new ListViewItem(resource.Id, 0);
 					item.Checked = false;
-					item.SubItems.Add(obs.Status.ToString());
-					item.Tag = obs;
-					this.lvObservations.Invoke((MethodInvoker)delegate
+					item.SubItems.Add(resource.TypeName);
+					item.Tag = contentItem;
+					this.lvContent.Invoke((MethodInvoker)delegate
 					{
-						lvObservations.Items.Add(item);
+						lvContent.Items.Add(item);
 					});
 				}
 			}
@@ -244,22 +244,22 @@ namespace Nuance.PowerCast.TestPowerCast
 			lvStudies.Columns.Add("Study Date", -2, HorizontalAlignment.Left);
 
 			// Set the view to show details.
-			lvObservations.View = View.Details;
+			lvContent.View = View.Details;
 			// Allow the user to edit item text.
-			lvObservations.LabelEdit = true;
+			lvContent.LabelEdit = true;
 			// Allow the user to rearrange columns.
-			lvObservations.AllowColumnReorder = true;
+			lvContent.AllowColumnReorder = true;
 			// Display check boxes.
-			lvObservations.CheckBoxes = true;
+			lvContent.CheckBoxes = true;
 			// Select the item and subitems when selection is made.
-			lvObservations.FullRowSelect = false;
+			lvContent.FullRowSelect = false;
 			// Display grid lines.
-			lvObservations.GridLines = true;
+			lvContent.GridLines = true;
 
 			// Create columns for the items and subitems.
 			// Width of -2 indicates auto-size.
-			lvObservations.Columns.Add("Observation Id", -2, HorizontalAlignment.Left);
-			lvObservations.Columns.Add("Observation Status", -2, HorizontalAlignment.Left);
+			lvContent.Columns.Add("Resource Id", -2, HorizontalAlignment.Left);
+			lvContent.Columns.Add("Resource Type", -2, HorizontalAlignment.Left);
 		}
 
 		private string GetAccessionNumber(ImagingStudy study)
@@ -565,9 +565,6 @@ namespace Nuance.PowerCast.TestPowerCast
 							Display($"Connecting to Hub Websocket: {_endpoint}");
 							_ws = new ClientWebSocket();
 							await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
-							_webSocketReader = new BackgroundWorker();
-							_webSocketReader.DoWork += webSocketReader_DoWork;
-							_webSocketReader.RunWorkerAsync();
 						}
 						catch (Exception ex)
 						{
@@ -575,6 +572,41 @@ namespace Nuance.PowerCast.TestPowerCast
 							MessageBox.Show(ex.ToString());
 							return;
 						}
+						// read the intent verification
+						Display("Expecting websocket verification. Waiting for response...");
+						string socketData;
+						try
+						{
+							socketData = await _webSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
+						}
+						catch (Exception ex)
+						{
+							// Normal to get a read error thrown here when socket is closed. We'll terminate quietly
+							Display($"***** Error reading websocket intent verification: {ex.Message}.");
+							return;
+						}
+						try
+						{
+							var sub = JsonConvert.DeserializeObject<Subscription>(socketData);
+							if (sub.Topic == txtTopic.Text)
+							{
+								Display("Intent verification received. Success.");
+							}
+							else
+							{
+								Display("Intent verification failed.");
+								return;
+							}
+						}
+						catch (Exception ex)
+						{
+							Display($"Exception parsing websocket intent verification: {ex.Message}.\r\n{socketData}");
+							return;
+						}
+						// start the websocket reader background thread
+						_webSocketReader = new BackgroundWorker();
+						_webSocketReader.DoWork += webSocketReader_DoWork;
+						_webSocketReader.RunWorkerAsync();
 					}
 				}
 			}
@@ -596,7 +628,10 @@ namespace Nuance.PowerCast.TestPowerCast
 
 		private void btnCopy_Click(object sender, EventArgs e)
 		{
-			Clipboard.SetText(txtLog.Text);
+			if (!String.IsNullOrEmpty(txtLog.Text))
+			{
+				Clipboard.SetText(txtLog.Text);
+			}
 		}
 
 		private void btnNotify_Click(object sender, EventArgs e)
@@ -698,6 +733,7 @@ namespace Nuance.PowerCast.TestPowerCast
 					txtConfigTopic.Text = _config.topic;
 					txtHubUrl.Text = _config.hub_endpoint;
 					txtTopic.Text = _config.topic;
+					btnDownloadHubLogs.Enabled = true;
 				}
 			}
 		}
@@ -800,7 +836,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			Display("Getting Hub log files...");
 			HttpResponseMessage response;
 			string hubUrl = _config.hub_endpoint;
-			UriBuilder urlBuilder = new UriBuilder(hubUrl.Substring(0, hubUrl.LastIndexOf("/")) + "/log/file/hub");
+			UriBuilder urlBuilder = new UriBuilder(hubUrl.Substring(0, hubUrl.LastIndexOf("/")) + "/log/file");
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
 			response = await SendAuthorizedRequest(request);
 			if (!response.IsSuccessStatusCode)
@@ -834,11 +870,24 @@ namespace Nuance.PowerCast.TestPowerCast
 			btnDeleteStudy.Enabled = lvStudies.CheckedIndices.Count > 0;
 		}
 
-		private void LvObservations_ItemChecked(object sender, ItemCheckedEventArgs e)
+		private void LvContent_ItemChecked(object sender, ItemCheckedEventArgs e)
 		{
-			// enable/disable buttons
-			btnUpdateObservation.Enabled = lvObservations.CheckedIndices.Count > 0;
-			btnDeleteObservation.Enabled = lvObservations.CheckedIndices.Count > 0;
+			// enable/disable update and delete buttons
+			int checkedCount = lvContent.CheckedIndices.Count;
+			btnUpdateContent.Enabled = checkedCount > 0;
+			btnDeleteContent.Enabled = checkedCount > 0;
+			// if the selected item has a reference to the resource, enable the "load references button"
+			if (checkedCount > 0)
+			{
+				ListViewItem lvItem = lvContent.Items[lvContent.CheckedIndices[0]];
+				object oTag = lvItem.Tag;
+				ContextItem context = (ContextItem)oTag;
+				btnLoadReference.Enabled = context.Reference != null;
+			}
+			else
+			{
+				btnLoadReference.Enabled = false;
+			}
 		}
 
 		private async void btnAddStudy_Click(object sender, EventArgs e)
@@ -1003,32 +1052,32 @@ namespace Nuance.PowerCast.TestPowerCast
 			_ = SendNotification(notification);
 		}
 
-		private void btnAddObservation_Click(object sender, EventArgs e)
+		private void btnAddContent_Click(object sender, EventArgs e)
 		{
 			if (null == _currentContext)
 			{
 				MessageBox.Show("There is no report opened in PowerScribe.");
 				return;
 			}
-			// open file containing json observation
-			openFileDialog1.InitialDirectory = $"{Directory.GetCurrentDirectory()}\\observations";
+			// open file containing json FHIR resources
+			openFileDialog1.InitialDirectory = $"{Directory.GetCurrentDirectory()}\\content";
 			openFileDialog1.Filter = "Json File|*.json|Text File|*.txt";
 			openFileDialog1.DefaultExt = "json";
-			openFileDialog1.Title = "Observation Json File";
+			openFileDialog1.Title = "Json File";
 			openFileDialog1.FileName = "";
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 			{
-				DiagnosticReport currentReport = CurrentContextualReport; // we'll add a reference to the new observation in here
+				DiagnosticReport currentReport = CurrentContextualReport; // we'll add a reference to the resource in here
 				//Read the json and insert it into a bundle.
-				string obsJson = File.ReadAllText(openFileDialog1.FileName);
-				Observation obs;
+				string resourceJson = File.ReadAllText(openFileDialog1.FileName);
+				DomainResource res;
 				try
 				{
-					obs = _fhirParser.Parse<Observation>(obsJson);
+					res = _fhirParser.Parse<DomainResource>(resourceJson);
 				}
 				catch(Exception ex)
 				{
-					MessageBox.Show($"Error parsing Observation Json: {ex.Message}");
+					MessageBox.Show($"Error parsing Json: {ex.Message}");
 					return;
 				}
 				Bundle bundle = new Bundle
@@ -1040,13 +1089,7 @@ namespace Nuance.PowerCast.TestPowerCast
 				bundle.Entry.Add(new Bundle.EntryComponent
 				{
 					Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.POST },
-					Resource = obs
-				});
-				currentReport.Contained.Add(obs);
-				bundle.Entry.Add(new Bundle.EntryComponent
-				{
-					Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.PUT },
-					Resource = currentReport
+					Resource = res
 				});
 				var sendForm = new SendForm(_fhirSerializer.SerializeToString(bundle));
 				DialogResult result = sendForm.ShowDialog();
@@ -1093,7 +1136,7 @@ namespace Nuance.PowerCast.TestPowerCast
 			}
 		}
 
-		private void UpdateObservation(Bundle.HTTPVerb verb)
+		private void UpdateContent(Bundle.HTTPVerb verb)
 		{
 			Bundle bundle = new Bundle
 			{
@@ -1102,17 +1145,28 @@ namespace Nuance.PowerCast.TestPowerCast
 				Entry = new List<Bundle.EntryComponent>()
 			};
 			DiagnosticReport currentReport = CurrentContextualReport;
-			Observation obs = null;
-			foreach (ListViewItem obsItem in lvObservations.CheckedItems)
+			object resource  = null;
+			string resourceType = null;
+			foreach (ListViewItem contentItem in lvContent.CheckedItems)
 			{
-				obs = (Observation)obsItem.Tag;
+				ContextItem context = (ContextItem)contentItem.Tag;
+				resource = context.Resource; 
+				resourceType = ((JObject)resource)["resourceType"].ToString();
 				break; // there should only be one because multiselect == false
 			}
 			Bundle.EntryComponent entry = new Bundle.EntryComponent
 			{
 				Request = new Bundle.RequestComponent() { Method = verb },
-				Resource = obs
 			};
+			switch (resourceType.ToLower())
+			{
+				case "observation":
+					entry.Resource = _fhirParser.Parse<Observation>(JsonConvert.SerializeObject(resource));
+					break;
+				case "media":
+					entry.Resource = _fhirParser.Parse<Media>(JsonConvert.SerializeObject(resource));
+					break;
+			}
 			bundle.Entry.Add(entry);
 			if (verb == Bundle.HTTPVerb.PUT)
 			{
@@ -1161,24 +1215,24 @@ namespace Nuance.PowerCast.TestPowerCast
 			_ = SendNotification(notification);	
 		}
 
-		private void btnUpdateObservation_Click(object sender, EventArgs e)
+		private void btnUpdateContent_Click(object sender, EventArgs e)
 		{
 			if (null == _currentContext)
 			{
 				MessageBox.Show("There is no report opened in PowerScribe.");
 				return;
 			}
-			UpdateObservation(Bundle.HTTPVerb.PUT);
+			UpdateContent(Bundle.HTTPVerb.PUT);
 		}
 
-		private void btnDeleteObservation_Click(object sender, EventArgs e)
+		private void btnDeleteContent_Click(object sender, EventArgs e)
 		{
 			if (null == _currentContext)
 			{
 				MessageBox.Show("There is no report opened in PowerScribe.");
 				return;
 			}
-			UpdateObservation(Bundle.HTTPVerb.DELETE);
+			UpdateContent(Bundle.HTTPVerb.DELETE);
 		}
 
 		private void btnUserLogout_Click(object sender, EventArgs e)
@@ -1196,6 +1250,42 @@ namespace Nuance.PowerCast.TestPowerCast
 				}
 			};
 			_ = SendNotification(notification);
+		}
+		private async void btnLoadReference_Click(object sender, EventArgs e)
+		{
+			ContextItem item = ((ContextItem)lvContent.Items[lvContent.CheckedIndices[0]].Tag);
+			HttpResponseMessage response = null;
+			UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/{_config.topic}/resource/{item.Reference}");
+			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
+			request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+			Display($"Getting FHIR resource from {urlBuilder.Uri.ToString()}");
+			response = await SendAuthorizedRequest(request);
+			string resourceJson = await response.Content.ReadAsStringAsync();
+			if (String.IsNullOrEmpty(resourceJson))
+			{
+				MessageBox.Show("Unable to read FHIR resource.");
+			}
+			else
+			{
+				string resourceType = ((JObject)item.Resource)["resourceType"].ToString();
+				switch (resourceType.ToLower())
+				{
+					case "media":
+						Media media = _fhirParser.Parse<Media>(resourceJson);
+						string contentType = media.Content.ContentType;
+						Display($"Received Media resource with content type {contentType}");
+						Log.Information($"Received Media resource:\r\n{media.ToJson(new FhirJsonSerializationSettings { Pretty = true })}");
+						// display the content
+						if (contentType == "image/jpeg")
+						{
+							ImageForm imageForm = new ImageForm();
+							imageForm.LoadImage(media.Content.Data);
+							imageForm.ShowDialog();
+						}
+						break;
+					// Some day other resources may go here...
+				}
+			}
 		}
 		#endregion
 
