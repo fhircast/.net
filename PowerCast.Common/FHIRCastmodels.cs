@@ -52,7 +52,10 @@ namespace Nuance.PowerCast.Common
 		[BindProperty(Name = "hub.lease_seconds")]
 		public int? LeaseSeconds { get; set; }
 
+		// The following members are not part of the API
 		public string ClientName { get; set; }
+		public DateTime? DateTimeSubscribed { get; set; }
+
 	}
 
 	public sealed class Channel
@@ -130,6 +133,9 @@ namespace Nuance.PowerCast.Common
 
 		[JsonProperty(PropertyName = "key")]
 		public string Key { get; set; }
+
+		[JsonProperty(PropertyName = "reference")]
+		public string Reference { get; set; }
 
 		[JsonProperty(PropertyName = "resource")]
 		public object Resource
@@ -251,7 +257,10 @@ namespace Nuance.PowerCast.Common
 			List<DomainResource> listDr = new List<DomainResource>();
 			foreach(ContextItem ci in contextItems)
 			{
-				listDr.Add(_fhirParser.Parse<DomainResource>(JsonConvert.SerializeObject(ci.Resource)));
+				if (null != ci.Resource)
+				{
+					listDr.Add(_fhirParser.Parse<DomainResource>(JsonConvert.SerializeObject(ci.Resource)));
+				}
 			}
 			return listDr;
 		}

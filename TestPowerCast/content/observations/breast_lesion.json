@@ -1,0 +1,46 @@
+{
+	"resourceType": "Observation",
+	"id": "1.2.276.0.45.1.7.4.1097371716104.15071610174600161.97856-Distance from nipple",
+	"status": "preliminary",
+	"category": {
+		"system": "http://terminology.hl7.org/CodeSystem/observation-category",
+		"code": "imaging",
+		"display": "Imaging"
+	},
+	"code": {
+		"coding": [
+			{
+				"system": "http://hl7.org/fhir/ValueSet/observation-codes",
+				"code": "10193-1",
+				"display": "Physical findings of Breasts Narrative"
+			}
+		],
+		"text": "Mammographic distance from nipple"
+	},
+	"issued": "2020-10-23T17:11:52.725Z",
+	"identifier": [
+		{
+			"system": "dcm:121151",
+			"value": "Distance from nipple"
+		}
+	],
+	"component": [
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "dcm",
+						"code": "121242",
+						"display": "Distance from Nipple"
+					}
+				]
+			},
+			"valueQuantity": {
+				"value": 37.39360046386719,
+				"unit": "mm",
+				"system": "http://unitsofmeasure.org",
+				"code": "mm"
+			}
+		}
+	]
+}

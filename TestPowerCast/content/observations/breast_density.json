@@ -1,0 +1,38 @@
+{
+	"resourceType": "Observation",
+	"id": "a67tbi5891trw123u6f9134",
+	"text": {
+		"status": "generated",
+		"div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Mammographic breast composition finding</div>"
+	},
+	"status": "preliminary",
+	"category": {
+		"system": "http://terminology.hl7.org/CodeSystem/observation-category",
+		"code": "imaging",
+		"display": "Imaging"
+	},
+	"code": {
+		"coding": [
+			{
+				"system": "http://snomed.info/sct",
+				"code": "129715009",
+				"display": "Mammographic breast composition finding"
+			}
+		],
+		"text": "Mammographic breast composition finding"
+	},
+	"component": [
+		{
+			"code": {
+				"coding": [
+					{
+						"system": "http://snomed.info/sct",
+						"code": "129719003"
+					}
+				]
+			},
+			"valueString": "Extremely dense breast composition (finding) (D)"
+		}
+	],
+	"issued": "2019-11-07T13:28:17.239-05:00"
+}

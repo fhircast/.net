@@ -61,6 +61,7 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.btnSubscribe = new System.Windows.Forms.Button();
 			this.tabLogin = new System.Windows.Forms.TabPage();
+			this.btnUserLogout = new System.Windows.Forms.Button();
 			this.txtLaunchUsername = new System.Windows.Forms.TextBox();
 			this.btnLogin = new System.Windows.Forms.Button();
 			this.tabConfiguration = new System.Windows.Forms.TabPage();
@@ -74,24 +75,24 @@
 			this.label2 = new System.Windows.Forms.Label();
 			this.btnGetConfig = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
-			this.tabUpdateObs = new System.Windows.Forms.TabPage();
-			this.btnDeleteObservation = new System.Windows.Forms.Button();
-			this.btnUpdateObservation = new System.Windows.Forms.Button();
-			this.btnAddObservation = new System.Windows.Forms.Button();
+			this.tabUpdateContent = new System.Windows.Forms.TabPage();
+			this.btnDeleteContent = new System.Windows.Forms.Button();
+			this.btnUpdateContent = new System.Windows.Forms.Button();
+			this.btnAddContent = new System.Windows.Forms.Button();
 			this.label9 = new System.Windows.Forms.Label();
-			this.lvObservations = new System.Windows.Forms.ListView();
+			this.lvContent = new System.Windows.Forms.ListView();
 			this.btnDownloadHubLogs = new System.Windows.Forms.Button();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
 			this.btnOpenLogFolder = new System.Windows.Forms.Button();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-			this.btnUserLogout = new System.Windows.Forms.Button();
+			this.btnLoadReference = new System.Windows.Forms.Button();
 			this.tabUpdateStudies.SuspendLayout();
 			this.tabReportOpenClose.SuspendLayout();
 			this.tabSubscribe.SuspendLayout();
 			this.tabLogin.SuspendLayout();
 			this.tabConfiguration.SuspendLayout();
 			this.tabControl1.SuspendLayout();
-			this.tabUpdateObs.SuspendLayout();
+			this.tabUpdateContent.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// txtLog
@@ -410,6 +411,17 @@
 			this.tabLogin.Text = "Login PowerScribe";
 			this.tabLogin.UseVisualStyleBackColor = true;
 			// 
+			// btnUserLogout
+			// 
+			this.btnUserLogout.Anchor = System.Windows.Forms.AnchorStyles.None;
+			this.btnUserLogout.Location = new System.Drawing.Point(6, 67);
+			this.btnUserLogout.Name = "btnUserLogout";
+			this.btnUserLogout.Size = new System.Drawing.Size(135, 23);
+			this.btnUserLogout.TabIndex = 14;
+			this.btnUserLogout.Text = "User Logout";
+			this.btnUserLogout.UseVisualStyleBackColor = true;
+			this.btnUserLogout.Click += new System.EventHandler(this.btnUserLogout_Click);
+			// 
 			// txtLaunchUsername
 			// 
 			this.txtLaunchUsername.Location = new System.Drawing.Point(6, 12);
@@ -533,82 +545,84 @@
 			this.tabControl1.Controls.Add(this.tabSubscribe);
 			this.tabControl1.Controls.Add(this.tabReportOpenClose);
 			this.tabControl1.Controls.Add(this.tabUpdateStudies);
-			this.tabControl1.Controls.Add(this.tabUpdateObs);
+			this.tabControl1.Controls.Add(this.tabUpdateContent);
 			this.tabControl1.Location = new System.Drawing.Point(12, 12);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
 			this.tabControl1.Size = new System.Drawing.Size(707, 177);
 			this.tabControl1.TabIndex = 13;
 			// 
-			// tabUpdateObs
+			// tabUpdateContent
 			// 
-			this.tabUpdateObs.Controls.Add(this.btnDeleteObservation);
-			this.tabUpdateObs.Controls.Add(this.btnUpdateObservation);
-			this.tabUpdateObs.Controls.Add(this.btnAddObservation);
-			this.tabUpdateObs.Controls.Add(this.label9);
-			this.tabUpdateObs.Controls.Add(this.lvObservations);
-			this.tabUpdateObs.Location = new System.Drawing.Point(4, 22);
-			this.tabUpdateObs.Name = "tabUpdateObs";
-			this.tabUpdateObs.Padding = new System.Windows.Forms.Padding(3);
-			this.tabUpdateObs.Size = new System.Drawing.Size(699, 151);
-			this.tabUpdateObs.TabIndex = 5;
-			this.tabUpdateObs.Text = "Observations";
-			this.tabUpdateObs.UseVisualStyleBackColor = true;
+			this.tabUpdateContent.Controls.Add(this.btnLoadReference);
+			this.tabUpdateContent.Controls.Add(this.btnDeleteContent);
+			this.tabUpdateContent.Controls.Add(this.btnUpdateContent);
+			this.tabUpdateContent.Controls.Add(this.btnAddContent);
+			this.tabUpdateContent.Controls.Add(this.label9);
+			this.tabUpdateContent.Controls.Add(this.lvContent);
+			this.tabUpdateContent.Location = new System.Drawing.Point(4, 22);
+			this.tabUpdateContent.Name = "tabUpdateContent";
+			this.tabUpdateContent.Padding = new System.Windows.Forms.Padding(3);
+			this.tabUpdateContent.Size = new System.Drawing.Size(699, 151);
+			this.tabUpdateContent.TabIndex = 5;
+			this.tabUpdateContent.Text = "Content";
+			this.tabUpdateContent.UseVisualStyleBackColor = true;
 			// 
-			// btnDeleteObservation
+			// btnDeleteContent
 			// 
-			this.btnDeleteObservation.Enabled = false;
-			this.btnDeleteObservation.Location = new System.Drawing.Point(507, 83);
-			this.btnDeleteObservation.Name = "btnDeleteObservation";
-			this.btnDeleteObservation.Size = new System.Drawing.Size(155, 23);
-			this.btnDeleteObservation.TabIndex = 44;
-			this.btnDeleteObservation.Text = "Delete...";
-			this.btnDeleteObservation.UseVisualStyleBackColor = true;
-			this.btnDeleteObservation.Click += new System.EventHandler(this.btnDeleteObservation_Click);
+			this.btnDeleteContent.Enabled = false;
+			this.btnDeleteContent.Location = new System.Drawing.Point(507, 83);
+			this.btnDeleteContent.Name = "btnDeleteContent";
+			this.btnDeleteContent.Size = new System.Drawing.Size(155, 23);
+			this.btnDeleteContent.TabIndex = 44;
+			this.btnDeleteContent.Text = "Delete...";
+			this.btnDeleteContent.UseVisualStyleBackColor = true;
+			this.btnDeleteContent.Click += new System.EventHandler(this.btnDeleteContent_Click);
 			// 
-			// btnUpdateObservation
+			// btnUpdateContent
 			// 
-			this.btnUpdateObservation.Enabled = false;
-			this.btnUpdateObservation.Location = new System.Drawing.Point(507, 54);
-			this.btnUpdateObservation.Name = "btnUpdateObservation";
-			this.btnUpdateObservation.Size = new System.Drawing.Size(155, 23);
-			this.btnUpdateObservation.TabIndex = 43;
-			this.btnUpdateObservation.Text = "Update...";
-			this.btnUpdateObservation.UseVisualStyleBackColor = true;
-			this.btnUpdateObservation.Click += new System.EventHandler(this.btnUpdateObservation_Click);
+			this.btnUpdateContent.Enabled = false;
+			this.btnUpdateContent.Location = new System.Drawing.Point(507, 54);
+			this.btnUpdateContent.Name = "btnUpdateContent";
+			this.btnUpdateContent.Size = new System.Drawing.Size(155, 23);
+			this.btnUpdateContent.TabIndex = 43;
+			this.btnUpdateContent.Text = "Update...";
+			this.btnUpdateContent.UseVisualStyleBackColor = true;
+			this.btnUpdateContent.Click += new System.EventHandler(this.btnUpdateContent_Click);
 			// 
-			// btnAddObservation
+			// btnAddContent
 			// 
-			this.btnAddObservation.Location = new System.Drawing.Point(507, 25);
-			this.btnAddObservation.Name = "btnAddObservation";
-			this.btnAddObservation.Size = new System.Drawing.Size(155, 23);
-			this.btnAddObservation.TabIndex = 41;
-			this.btnAddObservation.Text = "Add new...";
-			this.btnAddObservation.UseVisualStyleBackColor = true;
-			this.btnAddObservation.Click += new System.EventHandler(this.btnAddObservation_Click);
+			this.btnAddContent.Location = new System.Drawing.Point(507, 25);
+			this.btnAddContent.Name = "btnAddContent";
+			this.btnAddContent.Size = new System.Drawing.Size(155, 23);
+			this.btnAddContent.TabIndex = 41;
+			this.btnAddContent.Text = "Add new...";
+			this.btnAddContent.UseVisualStyleBackColor = true;
+			this.btnAddContent.Click += new System.EventHandler(this.btnAddContent_Click);
 			// 
 			// label9
 			// 
 			this.label9.AutoSize = true;
 			this.label9.Location = new System.Drawing.Point(7, 6);
 			this.label9.Name = "label9";
-			this.label9.Size = new System.Drawing.Size(196, 13);
+			this.label9.Size = new System.Drawing.Size(171, 13);
 			this.label9.TabIndex = 1;
-			this.label9.Text = "Observations contained in current report";
+			this.label9.Text = "Content contained in current report";
 			// 
-			// lvObservations
+			// lvContent
 			// 
-			this.lvObservations.CheckBoxes = true;
-			this.lvObservations.HideSelection = false;
-			this.lvObservations.Location = new System.Drawing.Point(6, 25);
-			this.lvObservations.MultiSelect = false;
-			this.lvObservations.Name = "lvObservations";
-			this.lvObservations.Size = new System.Drawing.Size(473, 120);
-			this.lvObservations.TabIndex = 0;
-			this.lvObservations.UseCompatibleStateImageBehavior = false;
+			this.lvContent.CheckBoxes = true;
+			this.lvContent.HideSelection = false;
+			this.lvContent.Location = new System.Drawing.Point(6, 25);
+			this.lvContent.MultiSelect = false;
+			this.lvContent.Name = "lvContent";
+			this.lvContent.Size = new System.Drawing.Size(473, 120);
+			this.lvContent.TabIndex = 0;
+			this.lvContent.UseCompatibleStateImageBehavior = false;
 			// 
 			// btnDownloadHubLogs
 			// 
+			this.btnDownloadHubLogs.Enabled = false;
 			this.btnDownloadHubLogs.Location = new System.Drawing.Point(180, 525);
 			this.btnDownloadHubLogs.Name = "btnDownloadHubLogs";
 			this.btnDownloadHubLogs.Size = new System.Drawing.Size(123, 23);
@@ -631,16 +645,16 @@
 			// 
 			this.openFileDialog1.FileName = "openFileDialog1";
 			// 
-			// btnUserLogout
+			// btnLoadReference
 			// 
-			this.btnUserLogout.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.btnUserLogout.Location = new System.Drawing.Point(6, 67);
-			this.btnUserLogout.Name = "btnUserLogout";
-			this.btnUserLogout.Size = new System.Drawing.Size(135, 23);
-			this.btnUserLogout.TabIndex = 14;
-			this.btnUserLogout.Text = "User Logout";
-			this.btnUserLogout.UseVisualStyleBackColor = true;
-			this.btnUserLogout.Click += new System.EventHandler(this.btnUserLogout_Click);
+			this.btnLoadReference.Enabled = false;
+			this.btnLoadReference.Location = new System.Drawing.Point(507, 112);
+			this.btnLoadReference.Name = "btnLoadReference";
+			this.btnLoadReference.Size = new System.Drawing.Size(155, 23);
+			this.btnLoadReference.TabIndex = 45;
+			this.btnLoadReference.Text = "Load Reference";
+			this.btnLoadReference.UseVisualStyleBackColor = true;
+			this.btnLoadReference.Click += new System.EventHandler(this.btnLoadReference_Click);
 			// 
 			// Form1
 			// 
@@ -667,8 +681,8 @@
 			this.tabConfiguration.ResumeLayout(false);
 			this.tabConfiguration.PerformLayout();
 			this.tabControl1.ResumeLayout(false);
-			this.tabUpdateObs.ResumeLayout(false);
-			this.tabUpdateObs.PerformLayout();
+			this.tabUpdateContent.ResumeLayout(false);
+			this.tabUpdateContent.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -715,23 +729,24 @@
 		private System.Windows.Forms.Button btnUpdateStudy;
 		private System.Windows.Forms.Button btnAddStudy;
 		private System.Windows.Forms.ListView lvStudies;
-		private System.Windows.Forms.TabPage tabUpdateObs;
-		private System.Windows.Forms.Button btnUpdateObservation;
+		private System.Windows.Forms.TabPage tabUpdateContent;
+		private System.Windows.Forms.Button btnUpdateContent;
 		private System.Windows.Forms.Label label9;
-		private System.Windows.Forms.ListView lvObservations;
+		private System.Windows.Forms.ListView lvContent;
 		private System.Windows.Forms.Label label6;
-		private System.Windows.Forms.Button btnAddObservation;
+		private System.Windows.Forms.Button btnAddContent;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 		private System.Windows.Forms.TextBox txtMRN;
 		private System.Windows.Forms.Label label11;
 		private System.Windows.Forms.TextBox txtAccession;
 		private System.Windows.Forms.Label label10;
 		private System.Windows.Forms.Button btnDeleteStudy;
-		private System.Windows.Forms.Button btnDeleteObservation;
+		private System.Windows.Forms.Button btnDeleteContent;
 		private System.Windows.Forms.Button btnUnsubscribe;
 		private System.Windows.Forms.TextBox txtLeaseSeconds;
 		private System.Windows.Forms.Label label12;
 		private System.Windows.Forms.Button btnUserLogout;
+		private System.Windows.Forms.Button btnLoadReference;
 	}
 }
 

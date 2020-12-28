@@ -22,17 +22,18 @@
 			"text": "Mammographic breast composition finding"
 		},
 		"component": [
-			{
-				"code": {
-					"coding": [
-						{
-							"system": "http://snomed.info/sct",
-							"code": "129719003"
-						}
-					]
-				},
-				"valueString": "Extremely dense breast composition (finding) (D)"
-			}
+                {
+                  "code": {
+                    "coding": [
+                      {
+                        "system": "http://snomed.info/sct",
+                        "code": "129716005",
+                        "display": "Almost entirely fat breast composition"
+                      }
+                    ]
+                  },
+                  "valueString": "A- Almost entirely fat."
+                }
 		],
 		"issued": "2019-11-07T13:28:17.239-05:00"
 }
