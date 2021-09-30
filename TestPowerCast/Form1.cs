@@ -546,7 +546,7 @@ namespace Nuance.PowerCast.TestPowerCast
 				else // SUBSCRIBE
 				{
 					SubscriptionResponse subResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(await response.Content.ReadAsStringAsync());
-					if (null == subResponse.contexts || subResponse.contexts.Count == 0)
+					if (null == subResponse || null == subResponse.contexts || subResponse.contexts.Count == 0)
 					{
 						_currentContext = null;
 					}
