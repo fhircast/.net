@@ -69,6 +69,7 @@ namespace Nuance.PowerCast.Common
 
 	public class SubscriptionResponse
 	{
+		[JsonProperty(PropertyName = "hub.channel.endpoint")]
 		public string websocket_endpoint { get; set; }
 		public List<HubContext> contexts { get; set; }
 	}
