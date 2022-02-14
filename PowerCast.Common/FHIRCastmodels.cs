@@ -100,18 +100,31 @@ namespace Nuance.PowerCast.Common
 		[JsonProperty(PropertyName = "hub.event")]
 		public string HubEvent { get; set; }
 
+		[JsonProperty(PropertyName = "context.versionId")]
+		public string ContextVersionId { get; set; }
+
+		[JsonProperty(PropertyName = "context.priorVersionId")]
+		public string PriorContextVersionId { get; set; }
+
 		[JsonProperty(PropertyName = "context")]
-		public List<ContextItem> Context { get; set; }	
+		public List<ContextItem> Context { get; set; }
 	}
 
 	public class HubContext
 	{
 		public HubContext() { }
-		public HubContext(string contextType, List<ContextItem> context)
+		public HubContext(string contextType, List<ContextItem> context, string contextVersionId = null, string priorContextVersionId = null)
 		{
+			this.contextVersionId = contextVersionId;
+			this.priorContextVersionId = priorContextVersionId;
 			this.contextType = contextType;
 			this.context = context;
 		}
+
+		[JsonProperty(PropertyName = "context.versionId")]
+		public string contextVersionId { get; set; }
+		[JsonProperty(PropertyName = "context.priorVersionId")]
+		public string priorContextVersionId { get; set; }
 		public string contextType { get; set; }
 		public List<ContextItem> context { get; set; }
 	}
@@ -124,7 +137,8 @@ namespace Nuance.PowerCast.Common
 			{typeof(DiagnosticReport), "DiagnosticReport"},
 			{typeof(Patient), "Patient"},
 			{typeof(Observation), "Observation"},
-			{typeof(Bundle), "Bundle"}
+			{typeof(Bundle), "Bundle"},
+			{typeof(OperationOutcome), "OperationOutcome"}
 		};
 	}
 
@@ -180,6 +194,12 @@ namespace Nuance.PowerCast.Common
 						case "Bundle":
 							{
 								Bundle res = (Bundle)value;
+								_resource = JsonConvert.DeserializeObject(res.ToJson());
+							}
+							break;
+						case "OperationOutcome":
+							{
+								OperationOutcome res = (OperationOutcome)value;
 								_resource = JsonConvert.DeserializeObject(res.ToJson());
 							}
 							break;
@@ -253,10 +273,15 @@ namespace Nuance.PowerCast.Common
 			return _fhirParser.Parse<DomainResource>(JsonConvert.SerializeObject(resource));
 		}
 
+		public static OperationOutcome ToOperationOutcome(this object resource)
+		{
+			return _fhirParser.Parse<OperationOutcome>(JsonConvert.SerializeObject(resource));
+		}
+
 		public static List<DomainResource> ToListDomainResource(this List<ContextItem> contextItems)
 		{
 			List<DomainResource> listDr = new List<DomainResource>();
-			foreach(ContextItem ci in contextItems)
+			foreach (ContextItem ci in contextItems)
 			{
 				if (null != ci.Resource)
 				{
@@ -271,19 +296,22 @@ namespace Nuance.PowerCast.Common
 			List<ContextItem> listCi = new List<ContextItem>();
 			foreach (DomainResource dr in resources)
 			{
-				var key = ContextKeys[dr.ResourceType.ToString()];
-				listCi.Add(new ContextItem()
+				if (dr.TryDeriveResourceType(out ResourceType resourceType))
 				{
-					Key = key,
-					Resource = dr
-				});
+					var key = ContextKeys[resourceType.ToString()];
+					listCi.Add(new ContextItem()
+					{
+						Key = key,
+						Resource = dr
+					});
+				}
 			}
 			return listCi;
 		}
 
-		public static Bundle GetUpdateBundle (this List<ContextItem> contextItems)
+		public static Bundle GetUpdateBundle(this List<ContextItem> contextItems)
 		{
-			var bundleItem = contextItems.Find(ci => ci.Key == "updates" || ci.Key == "bundle");
+			var bundleItem = contextItems.Find(ci => ci.Key == "updates" || ci.Key == "bundle" || ci.Key == "content");
 			return _fhirParser.Parse<Bundle>(JsonConvert.SerializeObject(bundleItem.Resource));
 		}
 	}

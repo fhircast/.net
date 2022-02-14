@@ -37,9 +37,9 @@
 			// 
 			// txtSendJson
 			// 
-			this.txtSendJson.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtSendJson.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.txtSendJson.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.txtSendJson.Location = new System.Drawing.Point(13, 53);
 			this.txtSendJson.Multiline = true;
@@ -87,7 +87,7 @@
 			this.label2.Size = new System.Drawing.Size(468, 13);
 			this.label2.TabIndex = 4;
 			this.label2.Text = "Valid request methods are: POST (to add new), PUT (to update existing) and DELETE" +
-    " (to remove)";
+	" (to remove)";
 			// 
 			// SendForm
 			// 
