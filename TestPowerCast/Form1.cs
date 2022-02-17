@@ -206,18 +206,25 @@ namespace Nuance.PowerCast.TestPowerCast
                         lvStudies.Items.Add(item);
                     });
                 }
-                var content = _currentContext.context.FindAll(c => c.Key.ToLower() == "observation" || c.Key.ToLower() == "media");
-                foreach (ContextItem contentItem in content)
+                var currentContentContextItemBundle = _currentContext.context.Find(c => c.Key.ToLower() == "content");
+                if (currentContentContextItemBundle != null)
                 {
-                    DomainResource resource = contentItem.Resource.ToDomainResource();
-                    ListViewItem item = new ListViewItem(resource.Id, 0);
-                    item.Checked = false;
-                    item.SubItems.Add(resource.TypeName);
-                    item.Tag = contentItem;
-                    this.lvContent.Invoke((MethodInvoker)delegate
+                    var currentContentBundle = _fhirParser.Parse<Bundle>(JsonConvert.SerializeObject(currentContentContextItemBundle.Resource));
+                    foreach (var entry in currentContentBundle.Entry)
                     {
-                        lvContent.Items.Add(item);
-                    });
+                        entry.Resource.TryDeriveResourceType(out ResourceType resourceType);
+                        if (resourceType == ResourceType.Observation)
+                        {
+                            ListViewItem item = new ListViewItem(entry.Resource.Id, 0);
+                            item.Checked = false;
+                            item.SubItems.Add(entry.Resource.TypeName);
+                            item.Tag = new ContextItem { Resource = entry.Resource, Key = resourceType.ToString(), Reference = entry.FullUrl };
+                            this.lvContent.Invoke((MethodInvoker)delegate
+                            {
+                                lvContent.Items.Add(item);
+                            });
+                        }
+                    }
                 }
             }
         }
