@@ -1,29 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using System.Net;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Configuration;
-using System.Net.WebSockets;
+﻿using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nuance.PowerCast.Common;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
-using System.Linq;
+using Nuance.PowerCast.TestPowerCast.Properties;
 using Serilog;
 using Serilog.Events;
-using System.Reflection;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
-using Nuance.PowerCast.TestPowerCast.Properties;
-using Subscription = Nuance.PowerCast.Common.Subscription;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.WebSockets;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Web;
+using System.Windows.Forms;
 using static Hl7.Fhir.Model.DiagnosticReport;
+using Subscription = Nuance.PowerCast.Common.Subscription;
 
 namespace Nuance.PowerCast.TestPowerCast
 {
@@ -43,11 +43,14 @@ namespace Nuance.PowerCast.TestPowerCast
         private readonly string _auth0HubAudience;
         private readonly string _auth0ClientID;
         private readonly string _auth0ClientSecret;
+        private bool _authTokenOptionChecked = false;
         private ConfigurationData _config = null;
         private string _logFilePath = null;
         private HubContext _currentContext = null;
         private FhirJsonParser _fhirParser = new FhirJsonParser(new ParserSettings { AcceptUnknownMembers = true, AllowUnrecognizedEnums = true, PermissiveParsing = true });
         private FhirJsonSerializer _fhirSerializer = new FhirJsonSerializer(new SerializerSettings { Pretty = true });
+        private JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
+        private bool _isSubscribed = false;
 
         const string APPNAME = "TestPowerCast";
         const string HUB_SECRET = "SeCreT";
@@ -83,6 +86,7 @@ namespace Nuance.PowerCast.TestPowerCast
             // hide all tabs except the first tab. Show them after user gets the configuration data
             InitializeComponent();
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
+            tabControl1.Deselecting += TabControl1_Deselecting;
             InitListViews();
         }
 
@@ -165,12 +169,6 @@ namespace Nuance.PowerCast.TestPowerCast
                         Log.Information("Event notification received:\r\n{message}", nMessage);
                         Display($"Event notification received:\r\n{nMessage.ToString()}");
                         await GetContext(); // refresh our context - even if we sent the notification
-                        if (ev.HubEvent == "userlogout")
-                        {
-                            //TestPowerCast should unsubscribe from the Hub when receiving the userlogout event notification
-                            SendSubscribe("unsubscribe");
-                            isUnsubscribed = true;
-                        }
                     }
                 }
             }
@@ -225,6 +223,12 @@ namespace Nuance.PowerCast.TestPowerCast
                             });
                         }
                     }
+
+                    if (lvContent.Items == null || (lvContent.Items.Count <= 0))
+                    {
+                        ToggleButtonEnabled(btnUpdateContent, false);
+                        ToggleButtonEnabled(btnDeleteContent, false);
+                    }
                 }
             }
         }
@@ -234,6 +238,14 @@ namespace Nuance.PowerCast.TestPowerCast
             get
             {
                 return (null == _currentContext ? null : _currentContext.context.Find(c => c.Key.ToLower() == "report").Resource).ToDiagnosticReport();
+            }
+        }
+
+        private ImagingStudy CurrentContextualStudy
+        {
+            get
+            {
+                return (_currentContext?.context?.FirstOrDefault(c => c.Key.ToLower() == "study")?.Resource)?.ToImagingStudy();
             }
         }
 
@@ -411,24 +423,66 @@ namespace Nuance.PowerCast.TestPowerCast
 
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (null == _config && tabControl1.SelectedIndex > 0)
+            if (!IsConfigurationAvailable() && 
+                (tabControl1.SelectedTab.Name != this.tabConfiguration.Name))
             {
                 tabControl1.SelectedIndex = 0;
-                MessageBox.Show("You must retreive the configuration data before performing other functions");
+                MessageBox.Show("You must retreive or set the configuration data before performing other functions");
+            }
+            else if (!_isSubscribed &&
+                (tabControl1.SelectedTab.Name == this.tabReportOpenClose.Name ||
+                tabControl1.SelectedTab.Name == this.tabUpdateStudies.Name ||
+                tabControl1.SelectedTab.Name == this.tabUpdateContent.Name))
+            {
+                //If we are not subscribed dont allow user to perform report actions. They need to subscribe first.
+                tabControl1.SelectedIndex = 2;
+                MessageBox.Show("You must first subscribe in order to perform report actions");
+            }
+            else if (_isSubscribed && tabControl1.SelectedTab.Name == this.tabConfiguration.Name)
+            {
+                //If we are subscribed dont allow the user to get configuration. They need to unsubscribe first.
+                tabControl1.SelectedIndex = 2;
+                MessageBox.Show("You must first unsubscribe in order to get a new topic/configuration");
             }
         }
 
-        private async Task<HttpResponseMessage> SendNotification(Notification notification)
+        private void TabControl1_Deselecting(object sender, EventArgs e)
         {
+            //If we are leaving the configuration tab, set the configuration values 
+            if(tabControl1.SelectedTab.Name == this.tabConfiguration.Name)
+            {
+                if (_config == null)
+                    _config = new ConfigurationData();
+
+                _config.topic = this.txtConfigTopic.Text;
+                _config.hub_endpoint = this.txtConfigHubUrl.Text;
+
+                if (_authTokenOptionChecked)
+                {
+                    _accessToken = this.txtAuthToken.Text;
+                }
+                else
+                {
+                    _accessToken = null;
+                    _config.token_endpoint = this.txtConfigTokenUrl.Text;
+                    _config.authorization_endpoint = this.txtConfigAuthUrl.Text;
+                }
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendNotification(Notification notification, DiagnosticReportStatus? status = null)
+        {
+            if (!IsConfigurationAvailable())
+                return null;
+
             HttpResponseMessage response = null;
             UriBuilder urlBuilder = new UriBuilder($"{txtHubUrl.Text}/{_config.topic}");
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, urlBuilder.Uri);
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
             // Serialize the notification and send it to the hub
-            JsonSerializerSettings js = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
-            string json = JsonConvert.SerializeObject(notification, Formatting.Indented, js);
+            string json = JsonConvert.SerializeObject(notification, Formatting.Indented, _serializerSettings);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            Display($"Sending notification event {notification.Event.HubEvent}");
+            Display($"Sending notification event {notification.Event.HubEvent} {(status != null ? $" with {status} status" : string.Empty)}");
             Log.Information("Sending notification:\r\n{json}", json);
             response = await SendAuthorizedRequest(request);
             return response;
@@ -443,13 +497,6 @@ namespace Nuance.PowerCast.TestPowerCast
             try
             {
                 response = await _httpClient.SendAsync(request);
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    // get a new token and try again
-                    this._accessToken = await GetToken();
-                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this._accessToken);
-                    response = await _httpClient.SendAsync(request);
-                }
             }
             catch (Exception ex)
             {
@@ -461,9 +508,16 @@ namespace Nuance.PowerCast.TestPowerCast
             {
                 Display("The request was accepted by the PowerCast Hub.");
             }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && _accessToken == null)
+            {
+                var unauthorizedMessage = $"Received 401 response, there was a Unauthorized error. Check Auth0 config settings and try again.";
+                Display(unauthorizedMessage, LogEventLevel.Error);
+                MessageBox.Show(unauthorizedMessage);
+            }
             else if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                var conflictMessage = $"Received 409 response, there was a version conflit. Use GetContext to get the latest context version.";
+                var errMsg = await response.Content?.ReadAsStringAsync();
+                var conflictMessage = $"Received 409 response. There was a conflit, use GetContext to get the latest context version. {errMsg}";
                 Display(conflictMessage, LogEventLevel.Error);
                 MessageBox.Show(conflictMessage);
             }
@@ -492,15 +546,31 @@ namespace Nuance.PowerCast.TestPowerCast
         private void btnUnsubscribe_Click(object sender, EventArgs e)
         {
             SendSubscribe("unsubscribe");
+            _isSubscribed = false;
+            this.btnUnsubscribe.Enabled = false;
+            this.btnSubscribe.Enabled = true;
         }
 
         private void btnSubscribe_Click(object sender, EventArgs e)
         {
+            if (IsConfigurationAvailable() && _ws != null && _ws.State == WebSocketState.Open)
+            {
+                var connectionMessage = $"WebSocket is already connected and subscribed.";
+                Display(connectionMessage, LogEventLevel.Information);
+                return;
+            }
+
             SendSubscribe("subscribe");
+            _isSubscribed = true;
+            this.btnSubscribe.Enabled = false;
+            this.btnUnsubscribe.Enabled = true;
         }
 
         private async void SendSubscribe(string mode)
         {
+            if (!IsConfigurationAvailable())
+                return;
+
             // save subscription parameters
             Settings.Default.txtSubEvents = txtSubEvents.Text;
             Settings.Default.Save();
@@ -518,6 +588,7 @@ namespace Nuance.PowerCast.TestPowerCast
                 { "hub.events", txtSubEvents.Text },
                 { "hub.secret", HUB_SECRET },
                 { "hub.lease_seconds", leaseSeconds },
+                { "hub.subscriber", APPNAME }
             };
             if (mode == "subscribe")
             {
@@ -639,16 +710,7 @@ namespace Nuance.PowerCast.TestPowerCast
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-            if (this.InvokeRequired)
-            {
-                this.txtLog.Invoke((MethodInvoker)delegate
-                {
-                    // Running on the UI thread
-                    txtLog.Text = "";
-                });
-            }
-            else
-                txtLog.Text = "";
+            SetTextBox(txtLog, string.Empty);
         }
 
         private void btnCopy_Click(object sender, EventArgs e)
@@ -660,6 +722,16 @@ namespace Nuance.PowerCast.TestPowerCast
         }
 
         private void btnNotify_Click(object sender, EventArgs e)
+        {
+            SendOpenNotification(true);
+        }
+
+        private void btnOpenStudy_Click(object sender, EventArgs e)
+        {
+            SendOpenNotification(false);
+        }
+
+        private void SendOpenNotification(bool addReportContext)
         {
             if (txtAccession.Text.Trim() == "" || txtMRN.Text.Trim() == "")
             {
@@ -694,16 +766,21 @@ namespace Nuance.PowerCast.TestPowerCast
                     Key = "study",
                     Resource = study
                 });
+
                 report.ImagingStudy.Add(new ResourceReference
                 {
                     Reference = $"ImagingStudy/{study.Id}"
                 });
             }
-            contextItems.Add(new ContextItem()
+
+            if (addReportContext)
             {
-                Key = "report",
-                Resource = report
-            });
+                contextItems.Add(new ContextItem()
+                {
+                    Key = "report",
+                    Resource = report
+                });
+            }
 
             // create and send the notification for DiagnosticReport-open event
             Notification notification = new Notification
@@ -712,7 +789,7 @@ namespace Nuance.PowerCast.TestPowerCast
                 Id = $"{APPNAME}-{Guid.NewGuid():N}",
                 Event = new NotificationEvent()
                 {
-                    HubEvent = "DiagnosticReport-open",
+                    HubEvent = addReportContext ? "DiagnosticReport-open" : "ImagingStudy-open",
                     Topic = _config.topic,
                     Context = contextItems
                 }
@@ -726,7 +803,7 @@ namespace Nuance.PowerCast.TestPowerCast
 
             var response = await SendNotification(notification);
 
-            if (!response.IsSuccessStatusCode)
+            if (response != null && !response.IsSuccessStatusCode)
             {
                 Display($"Error sending notification: {(int)response.StatusCode} - {response.ReasonPhrase}", LogEventLevel.Error);
             }
@@ -818,11 +895,14 @@ namespace Nuance.PowerCast.TestPowerCast
         private async void btnGetReport_Click(object sender, EventArgs e)
         {
             await GetContext();
-            Display($"New context:\r\n{JsonConvert.SerializeObject(_currentContext, Formatting.Indented)}");
+            Display($"New context:\r\n{JsonConvert.SerializeObject(_currentContext, Formatting.Indented, _serializerSettings)}");
         }
 
         private async Task<bool> GetContext()
         {
+            if (!IsConfigurationAvailable())
+                return false;
+
             string hubUrl = txtHubUrl.Text;
             var request = new HttpRequestMessage(HttpMethod.Get, $"{hubUrl}/{_config.topic}");
             HttpResponseMessage response = null;
@@ -860,7 +940,6 @@ namespace Nuance.PowerCast.TestPowerCast
             if (notification != null && notification.Event != null)
             {
                 notification.Event.ContextVersionId = _currentContext.contextVersionId;
-                notification.Event.PriorContextVersionId = _currentContext.priorContextVersionId;
             }
         }
 
@@ -906,20 +985,21 @@ namespace Nuance.PowerCast.TestPowerCast
         private void LvContent_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
             // enable/disable update and delete buttons
-            int checkedCount = lvContent.CheckedIndices.Count;
-            btnUpdateContent.Enabled = checkedCount > 0;
-            btnDeleteContent.Enabled = checkedCount > 0;
+            bool itemChecked = lvContent.CheckedIndices.Count > 0;
+            ToggleButtonEnabled(btnUpdateContent, itemChecked);
+            ToggleButtonEnabled(btnDeleteContent, itemChecked);
+
             // if the selected item has a reference to the resource, enable the "load references button"
-            if (checkedCount > 0)
+            if (itemChecked)
             {
                 ListViewItem lvItem = lvContent.Items[lvContent.CheckedIndices[0]];
                 object oTag = lvItem.Tag;
                 ContextItem context = (ContextItem)oTag;
-                btnLoadReference.Enabled = context.Reference != null;
+                ToggleButtonEnabled(btnLoadReference, (context.Reference != null));
             }
             else
             {
-                btnLoadReference.Enabled = false;
+                ToggleButtonEnabled(btnLoadReference, false);
             }
         }
 
@@ -1095,39 +1175,19 @@ namespace Nuance.PowerCast.TestPowerCast
                 MessageBox.Show("There is no report opened in PowerScribe.");
                 return;
             }
-            // open file containing json FHIR resources
+            // open file(s) containing json FHIR resources
             openFileDialog1.InitialDirectory = $"{Directory.GetCurrentDirectory()}\\content";
             openFileDialog1.Filter = "Json File|*.json|Text File|*.txt";
             openFileDialog1.DefaultExt = "json";
             openFileDialog1.Title = "Json File";
             openFileDialog1.FileName = "";
+            openFileDialog1.Multiselect = true;
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                DiagnosticReport currentReport = CurrentContextualReport; // we'll add a reference to the resource in here
-                                                                          //Read the json and insert it into a bundle.
-                string resourceJson = File.ReadAllText(openFileDialog1.FileName);
-                DomainResource res;
-                try
-                {
-                    res = _fhirParser.Parse<DomainResource>(resourceJson);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error parsing Json: {ex.Message}");
-                    return;
-                }
-                Bundle bundle = new Bundle
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Type = Bundle.BundleType.Transaction,
-                    Entry = new List<Bundle.EntryComponent>()
-                };
-                bundle.Entry.Add(new Bundle.EntryComponent
-                {
-                    Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.POST },
-                    Resource = res
-                });
+                //Read the json from the selected files and insert it into a bundle.
+                var bundle = GenerateObservationBundle(openFileDialog1.FileNames.ToList());
                 var sendForm = new SendForm(_fhirSerializer.SerializeToString(bundle));
+
                 DialogResult result = sendForm.ShowDialog();
                 if (result == DialogResult.OK)
                 {
@@ -1148,23 +1208,7 @@ namespace Nuance.PowerCast.TestPowerCast
                         {
                             HubEvent = "DiagnosticReport-update",
                             Topic = _config.topic,
-                            Context = new List<ContextItem>
-                            {
-                                new ContextItem()
-                                {
-                                    Key = "report",
-                                    Resource = new DiagnosticReport()
-                                    {
-                                        Id=currentReport.Id,
-                                        Meta = currentReport.Meta
-                                    }
-                                },
-                                new ContextItem()
-                                {
-                                    Key = "content",
-                                    Resource = bundle
-                                }
-                            }
+                            Context = CreateContext(bundle)
                         }
                     };
                     SetContextVersion(notification);
@@ -1174,8 +1218,61 @@ namespace Nuance.PowerCast.TestPowerCast
             }
         }
 
+        private Bundle GenerateObservationBundle(List<string> fileNames)
+        {
+            var bundleEntries = new List<Bundle.EntryComponent>();
+            try
+            {
+                foreach (var filename in fileNames)
+                {
+                    string currentResourceJson = File.ReadAllText(filename);
+
+                    //Check if we encountered a jarray, if so add each resource from the array to our bundle
+                    var resourceJToken = JToken.Parse(currentResourceJson);
+                    if (resourceJToken is JArray)
+                    {
+                        var resourceArray = resourceJToken as JArray;
+                        foreach (var currentResource in resourceArray.Children())
+                        {
+                            var currentBundleEntry = new Bundle.EntryComponent
+                            {
+                                Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.POST },
+                                Resource = _fhirParser.Parse<DomainResource>(currentResource.ToString())
+                            };
+                            bundleEntries.Add(currentBundleEntry);
+                        }
+                    }
+                    else
+                    {
+                        //Just one obervation resource in the file so parse and add it to our bundle
+                        var currentBundleEntry = new Bundle.EntryComponent
+                        {
+                            Request = new Bundle.RequestComponent { Method = Bundle.HTTPVerb.POST },
+                            Resource = _fhirParser.Parse<DomainResource>(currentResourceJson)
+                        };
+                        bundleEntries.Add(currentBundleEntry);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error parsing Json: {ex.Message}");
+                return null;
+            }
+
+            Bundle bundle = new Bundle
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Type = Bundle.BundleType.Transaction,
+                Entry = bundleEntries
+            };
+
+            return bundle;
+        }
+
         private void UpdateContent(Bundle.HTTPVerb verb)
         {
+            bool sendUpdate = true;
             Bundle bundle = new Bundle
             {
                 Id = Guid.NewGuid().ToString("N"),
@@ -1222,37 +1319,30 @@ namespace Nuance.PowerCast.TestPowerCast
                         return;
                     }
                 }
-            }
-            Notification notification = new Notification
-            {
-                Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
-                Event = new NotificationEvent()
+                else 
                 {
-                    HubEvent = "DiagnosticReport-update",
-                    Topic = _config.topic,
-                    Context = new List<ContextItem>
-                    {
-                        new ContextItem()
-                        {
-                            Key = "report",
-                            Resource = new DiagnosticReport()
-                            {
-                                Id= currentReport.Id,
-                                Meta = currentReport.Meta
-                            }
-                        },
-                        new ContextItem()
-                        {
-                            Key = "content",
-                            Resource = bundle
-                        }
-                    }
+                    sendUpdate = false;
                 }
-            };
-            SetContextVersion(notification);
+            }
 
-            _ = SendNotification(notification);
+            if (sendUpdate)
+            {
+                Notification notification = new Notification
+                {
+                    Timestamp = DateTime.Now,
+                    Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                    Event = new NotificationEvent()
+                    {
+                        HubEvent = "DiagnosticReport-update",
+                        Topic = _config.topic,
+                        Context = CreateContext(bundle)
+                    }
+                };
+
+                SetContextVersion(notification);
+
+                _ = SendNotification(notification);
+            }
         }
 
         private void btnUpdateContent_Click(object sender, EventArgs e)
@@ -1277,6 +1367,17 @@ namespace Nuance.PowerCast.TestPowerCast
 
         private void btnUserLogout_Click(object sender, EventArgs e)
         {
+            if (!IsConfigurationAvailable())
+            {
+                return;
+            }
+            else if (_ws == null || _ws.State != WebSocketState.Open)
+            {
+                //handle edge case if user click logout after getting topic but before subscribing
+                ResetTopic();
+                return;
+            }
+
             // send userLogout event
             Notification notification = new Notification
             {
@@ -1422,8 +1523,199 @@ namespace Nuance.PowerCast.TestPowerCast
                     }
                 }
             };
-            _ = SendNotification(notification);
+            _ = SendNotification(notification, status);
         }
+
+        private void btnCloseStudy_Click(object sender, EventArgs e)
+        {
+            if (null == _currentContext)
+            {
+                MessageBox.Show("There is no report open in PowerScribe.");
+                return;
+            }
+            // send DiagnosticReport-close event
+            Notification notification = new Notification
+            {
+                Timestamp = DateTime.Now,
+                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Event = new NotificationEvent()
+                {
+                    HubEvent = "ImagingStudy-close",
+                    Topic = _config.topic,
+                    Context = new List<ContextItem>
+                    {
+                        new ContextItem()
+                        {
+                            Key = "study",
+                            Resource = new ImagingStudy
+                            {
+                                Id = CurrentContextualStudy?.Id
+                            }
+                        }
+                    }
+                }
+            };
+            _ = SendNotification(notification, null);
+        }
+
         #endregion
+
+        private void ResetTopic()
+        {
+            if (_config != null)
+                _config.topic = null;
+            SetTextBox(txtTopic);
+            SetTextBox(txtConfigTopic);
+            Display($"Resetting topic from configuration.");
+        }
+
+        private bool IsConfigurationAvailable()
+        {
+            var configAvailable = _config != null &&
+                !(string.IsNullOrEmpty(_config.topic) ||
+                string.IsNullOrEmpty(_config.hub_endpoint));
+
+            if (!configAvailable)
+                return false;
+
+            if (!_authTokenOptionChecked)
+            {
+                configAvailable = !(string.IsNullOrEmpty(_config.authorization_endpoint) ||
+                    string.IsNullOrEmpty(_config.token_endpoint));
+            }
+            else if (string.IsNullOrWhiteSpace(_accessToken))
+            {
+                return false;
+            }
+
+            return configAvailable;
+        }
+
+        /// <summary>
+        /// Set TextBox values thread safe
+        /// </summary>
+        /// <param name="textBox"></param>
+        /// <param name="value"></param>
+        public void SetTextBox(TextBox textBox, string value = null)
+        {
+            if (textBox.InvokeRequired == true)
+            {
+                Action safeWrite = delegate { SetTextBox(textBox, value); };
+                textBox.BeginInvoke(safeWrite);
+            }
+            else
+            {
+                textBox.Text = value;
+            }
+        }
+
+        /// <summary>
+        /// Set button enabled thread safe
+        /// </summary>
+        /// <param name="button"></param>
+        /// <param name="value"></param>
+        public void ToggleButtonEnabled(Button button, bool value)
+        {
+            if (button.InvokeRequired == true)
+            {
+                Action safeWrite = delegate { ToggleButtonEnabled(button, value); };
+                button.BeginInvoke(safeWrite);
+            }
+            else
+            {
+                button.Enabled = value;
+            }
+        }
+
+        private List<ContextItem> CreateContext(Bundle bundle)
+        {
+            List<ContextItem> context;
+
+            if (cbxIncludeCurrentContext.Checked)
+            {
+                context = new List<ContextItem>(_currentContext.context)
+                {
+                    new ContextItem()
+                    {
+                        Key = "content",
+                        Resource = bundle
+                    }
+                };
+            }
+            else
+            {
+                context = new List<ContextItem>
+                {
+                    new ContextItem()
+                    {
+                        Key = "report",
+                        Resource = new DiagnosticReport()
+                        {
+                            Id= CurrentContextualReport.Id,
+                            Meta = CurrentContextualReport.Meta
+                        }
+                    },
+                    new ContextItem()
+                    {
+                        Key = "content",
+                        Resource = bundle
+                    }
+                };
+            }
+
+            return context;
+        }
+
+        /// <summary>
+        /// Gets a list of subscriptions for the current topic
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void buttonGetSubscriptions_Click(object sender, EventArgs e)
+        {
+            if (!IsConfigurationAvailable())
+                return;
+
+            string hubUrl = txtHubUrl.Text.Trim();
+            string encodedEndpoint = HttpUtility.UrlEncode(_endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{hubUrl}/TopicSubscriptions/{_config.topic}/{encodedEndpoint}");
+            HttpResponseMessage response = null;
+
+            try
+            {
+                response = await SendAuthorizedRequest(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Display($"PowerCast GetSubscriptions request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Display($"Exception connecting to the hub: {hubUrl} \r\nRequest: {request} \r\nException: {ex.Message}");
+            }
+
+            string subscriptionJson = await response.Content.ReadAsStringAsync();
+            var subscriptions = JsonConvert.DeserializeObject(String.IsNullOrWhiteSpace(subscriptionJson) ? String.Empty : subscriptionJson);
+
+            Display($"Subscription(s) in the topic '{_config.topic}' are below:\r\n{JsonConvert.SerializeObject(subscriptions, Formatting.Indented, _serializerSettings)}");
+        }
+
+        private void useAuthToken_CheckedChanged(object sender, EventArgs e)
+        {
+            _authTokenOptionChecked = this.useAuthToken.Checked;
+            
+            //If checked hide/disable the auth0 text boxes and labels
+            this.txtConfigAuthUrl.Visible = !_authTokenOptionChecked;
+            this.txtConfigAuthUrl.Enabled = !_authTokenOptionChecked;
+            this.txtConfigTokenUrl.Visible = !_authTokenOptionChecked;
+            this.txtConfigTokenUrl.Enabled = !_authTokenOptionChecked;
+            this.label2.Visible = !_authTokenOptionChecked;
+            this.label8.Visible = !_authTokenOptionChecked;
+
+            //If checked display/enable auth token textbox and label
+            this.txtAuthToken.Visible = _authTokenOptionChecked;
+            this.txtAuthToken.Enabled = _authTokenOptionChecked;
+            this.lblAuthToken.Visible = _authTokenOptionChecked;
+        }
     }
 }

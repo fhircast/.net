@@ -29,7 +29,8 @@
 		private void InitializeComponent()
 		{
 			this.txtSendJson = new System.Windows.Forms.TextBox();
-			this.btnSendUpdateStudy = new System.Windows.Forms.Button();
+            this.txtSendJson.MaxLength = 128000;
+            this.btnSendUpdateStudy = new System.Windows.Forms.Button();
 			this.btnSendCancel = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();

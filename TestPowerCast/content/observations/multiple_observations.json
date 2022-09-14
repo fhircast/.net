@@ -1,0 +1,1615 @@
+[{
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32110_RV",
+                    "system": "SRT",
+                    "display": "CardiacIndexRV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "1.97",
+            "unit": "l/min/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-BSARVCardiacOutput"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8822-3_BSA",
+                    "system": "LN",
+                    "display": "RightVentricularEDVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "94.83",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-BSARVEDVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8817-9_BSA",
+                    "system": "LN",
+                    "display": "RightventricularejectionfractionbyCT"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "39",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-BSARVEjectionFraction"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8824-5_BSA",
+                    "system": "LN",
+                    "display": "RightVentricularESVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "57.66",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-BSARVESVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-00078_RV",
+                    "system": "SRT",
+                    "display": "StrokeIndexRV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "37.17",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-BSARVStrokeVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32100_RV",
+                    "system": "SRT",
+                    "display": "CardiacOutputRV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "4.08",
+            "unit": "l/min",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-RVCardiacOutput"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8822-9",
+                    "system": "LN",
+                    "display": "RightVentricularEDVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "196.30",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-RVEDVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8817-9",
+                    "system": "LN",
+                    "display": "RightventricularejectionfractionbyCT"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "39",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-RVEjectionFraction"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8824-5",
+                    "system": "LN",
+                    "display": "RightVentricularESVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "119.36",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-RVESVolume"
+
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32120_RV",
+                    "system": "SRT",
+                    "display": "StrokeVolumeRV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "76.94",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "78427e71-f78f-4bf6-bd09-f2f32d5aea5a-RVStrokeVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8277-6",
+                    "system": "LN",
+                    "display": "BodySurfaceArea"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "2.07",
+            "unit": "m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BodySurfaceArea"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32110_LV",
+                    "system": "SRT",
+                    "display": "CardiacIndexLV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "2.47",
+            "unit": "l/min/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVCardiacOutput"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8821-1_BSA",
+                    "system": "LN",
+                    "display": "LeftVentricularEDVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "70.62",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVEDVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8810-4_BSA",
+                    "system": "LN",
+                    "display": "LeftventricularejectionfractionbyCT"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "66",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVEjectionFraction"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8823-7_BSA",
+                    "system": "LN",
+                    "display": "LeftVentricularESVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "23.96",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVESVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "122447_BSA",
+                    "system": "DCM",
+                    "display": "WallMass"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "68.70",
+            "unit": "g/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVMyocardialMass"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-00078_LV",
+                    "system": "SRT",
+                    "display": "StrokeIndexLV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "46.66",
+            "unit": "ml/m2",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-BSALVStrokeVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32100_LV",
+                    "system": "SRT",
+                    "display": "CardiacOutputLV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "5.12",
+            "unit": "l/min",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVCardiacOutput"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8821-1",
+                    "system": "LN",
+                    "display": "LeftVentricularEDVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "146.19",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVEDVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8810-4",
+                    "system": "LN",
+                    "display": "LeftventricularejectionfractionbyCT"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "66",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVEjectionFraction"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "8823-7",
+                    "system": "LN",
+                    "display": "LeftVentricularESVolume"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "49.60",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVESVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "122447",
+                    "system": "DCM",
+                    "display": "WallMass"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "142.20",
+            "unit": "g",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVMyocardialMass"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "F-32120_LV",
+                    "system": "SRT",
+                    "display": "StrokeVolumeLV"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "96.59",
+            "unit": "ml",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "c142b8d9-25bf-4772-8eb7-2ba9fe59c210-LVStrokeVolume"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "9bda06cd-520f-4c07-b8b8-aeb3e0466ee9"
+            }
+        ],
+        "component": [{
+                "code": {
+                    "coding": [{
+                            "code": "112058_Ca",
+                            "system": "DCM",
+                            "display": "CalciumScoreCa"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_CX",
+                            "system": "DCM",
+                            "display": "CalciumScoreCX"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_LAD",
+                            "system": "DCM",
+                            "display": "CalciumScoreLAD"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "9.60",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_LM",
+                            "system": "DCM",
+                            "display": "CalciumScoreLM"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_RCA",
+                            "system": "DCM",
+                            "display": "CalciumScoreRCA"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_Total",
+                            "system": "DCM",
+                            "display": "CalciumScoreTotal"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "9.60",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_U1",
+                            "system": "DCM",
+                            "display": "CalciumScoreU1"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "112058_U2",
+                            "system": "DCM",
+                            "display": "CalciumScoreU2"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_Ca",
+                            "system": "DCM",
+                            "display": "CommentCa"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_CX",
+                            "system": "DCM",
+                            "display": "CommentCX"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_LAD",
+                            "system": "DCM",
+                            "display": "CommentLAD"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_LM",
+                            "system": "DCM",
+                            "display": "CommentLM"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_RCA",
+                            "system": "DCM",
+                            "display": "CommentRCA"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_Total",
+                            "system": "DCM",
+                            "display": "CommentTotal"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_U1",
+                            "system": "DCM",
+                            "display": "CommentU1"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "121106_U2",
+                            "system": "DCM",
+                            "display": "CommentU2"
+                        }
+                    ]
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_Ca",
+                            "system": "DCM",
+                            "display": "CalciumMassCa"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_CX",
+                            "system": "DCM",
+                            "display": "CalciumMassCX"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_LAD",
+                            "system": "DCM",
+                            "display": "CalciumMassLAD"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "2.17",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_LM",
+                            "system": "DCM",
+                            "display": "CalciumMassLM"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_RCA",
+                            "system": "DCM",
+                            "display": "CalciumMassRCA"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_Total",
+                            "system": "DCM",
+                            "display": "CalciumMassTotal"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "2.17",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_U1",
+                            "system": "DCM",
+                            "display": "CalciumMassU1"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122661_U2",
+                            "system": "DCM",
+                            "display": "CalciumMassU2"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mg",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_Ca",
+                            "system": "SRT",
+                            "display": "NumberofLesionsCa"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_CX",
+                            "system": "SRT",
+                            "display": "NumberofLesionsCX"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_LAD",
+                            "system": "SRT",
+                            "display": "NumberofLesionsLAD"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "2.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_LM",
+                            "system": "SRT",
+                            "display": "NumberofLesionsLM"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_RCA",
+                            "system": "SRT",
+                            "display": "NumberofLesionsRCA"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_Total",
+                            "system": "SRT",
+                            "display": "NumberofLesionsTotal"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "2.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_U1",
+                            "system": "SRT",
+                            "display": "NumberofLesionsU1"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "F-02A3B_U2",
+                            "system": "SRT",
+                            "display": "NumberofLesionsU2"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_Ca",
+                            "system": "DCM",
+                            "display": "CalciumVolumeCa"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_CX",
+                            "system": "DCM",
+                            "display": "CalciumVolumeCX"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_LAD",
+                            "system": "DCM",
+                            "display": "CalciumVolumeLAD"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "7.40",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_LM",
+                            "system": "DCM",
+                            "display": "CalciumVolumeLM"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_RCA",
+                            "system": "DCM",
+                            "display": "CalciumVolumeRCA"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_Total",
+                            "system": "DCM",
+                            "display": "CalciumVolumeTotal"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "7.40",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_U1",
+                            "system": "DCM",
+                            "display": "CalciumVolumeU1"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122660_U2",
+                            "system": "DCM",
+                            "display": "CalciumVolumeU2"
+                        }
+                    ]
+                },
+                "valueQuantity": {
+                    "value": "0.00",
+                    "unit": "mm3",
+                    "system": "UCUM"
+                }
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "122322",
+                            "system": "DCM",
+                            "display": "CalibrationFactor"
+                        }
+                    ]
+                },
+                "valueString": "0.794"
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "99_009",
+                            "system": "99_CaSc_Priv",
+                            "display": "ScoreType"
+                        }
+                    ]
+                },
+                "valueString": "Agatstonequivalent"
+            }, {
+                "code": {
+                    "coding": [{
+                            "code": "99_010",
+                            "system": "99_CaSc_Priv",
+                            "display": "ThresholdWithUnits"
+                        }
+                    ]
+                },
+                "valueString": "130HU(103.2mg/cm3CaHA)"
+            }
+        ],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "112058",
+                    "system": "DCM",
+                    "display": "CalciumScore"
+                }
+            ]
+        },
+        "contained": [],
+        "id": "9bda06cd-520f-4c07-b8b8-aeb3e0466ee9"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "0a847505-3ba2-41c7-ab26-f7828f461e70"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "R-101BA",
+                    "system": "SRT",
+                    "display": "LumenAreaStenosis"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "93",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "0a847505-3ba2-41c7-ab26-f7828f461e70-LumenAreaStenosis"
+    }, {
+
+        "resourceType": "Observation",
+        "identifier": [{
+                "type": {
+                    "coding": [{
+                            "code": "MEASUREMENT_ID",
+                            "system": "CNS",
+                            "display": "Identifierofthesourcemeasurement"
+                        }
+                    ]
+                },
+                "value": "0a847505-3ba2-41c7-ab26-f7828f461e70"
+            }
+        ],
+        "component": [],
+        "category": [{
+                "coding": [{
+                        "code": "measurement",
+                        "system": "measurement",
+                        "display": "measurement"
+                    }
+                ]
+            }
+        ],
+        "hasMember": [],
+        "code": {
+            "coding": [{
+                    "code": "R-101BB",
+                    "system": "SRT",
+                    "display": "LumenDiameterStenosis"
+                }
+            ]
+        },
+        "valueQuantity": {
+            "value": "72",
+            "unit": "%",
+            "system": "UCUM"
+        },
+        "contained": [],
+        "id": "0a847505-3ba2-41c7-ab26-f7828f461e70-LumenDiameterStenosis"
+    }
+]
