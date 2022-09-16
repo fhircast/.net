@@ -467,6 +467,9 @@ namespace Nuance.PowerCast.TestPowerCast
                     _config.token_endpoint = this.txtConfigTokenUrl.Text;
                     _config.authorization_endpoint = this.txtConfigAuthUrl.Text;
                 }
+
+                txtHubUrl.Text = _config.hub_endpoint;
+                txtTopic.Text = _config.topic;
             }
         }
 
@@ -1703,7 +1706,8 @@ namespace Nuance.PowerCast.TestPowerCast
         private void useAuthToken_CheckedChanged(object sender, EventArgs e)
         {
             _authTokenOptionChecked = this.useAuthToken.Checked;
-            
+            this.btnGetConfig.Enabled = !_authTokenOptionChecked;
+
             //If checked hide/disable the auth0 text boxes and labels
             this.txtConfigAuthUrl.Visible = !_authTokenOptionChecked;
             this.txtConfigAuthUrl.Enabled = !_authTokenOptionChecked;

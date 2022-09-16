@@ -394,6 +394,7 @@
             this.txtHubUrl.ReadOnly = true;
             this.txtHubUrl.Size = new System.Drawing.Size(344, 20);
             this.txtHubUrl.TabIndex = 15;
+            this.txtHubUrl.Enabled = false;
             // 
             // label1
             // 
@@ -410,6 +411,7 @@
             this.txtTopic.Name = "txtTopic";
             this.txtTopic.Size = new System.Drawing.Size(478, 20);
             this.txtTopic.TabIndex = 17;
+            this.txtTopic.Enabled = false;
             // 
             // txtSubEvents
             // 
