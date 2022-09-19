@@ -33,6 +33,7 @@
             this.btnClear = new System.Windows.Forms.Button();
             this.btnCopy = new System.Windows.Forms.Button();
             this.ttAccession = new System.Windows.Forms.ToolTip(this.components);
+            this.buttonGetSubscriptions = new System.Windows.Forms.Button();
             this.tabUpdateStudies = new System.Windows.Forms.TabPage();
             this.btnDeleteStudy = new System.Windows.Forms.Button();
             this.btnUpdateStudy = new System.Windows.Forms.Button();
@@ -40,6 +41,10 @@
             this.label6 = new System.Windows.Forms.Label();
             this.lvStudies = new System.Windows.Forms.ListView();
             this.tabReportOpenClose = new System.Windows.Forms.TabPage();
+            this.btnCloseStudy = new System.Windows.Forms.Button();
+            this.btnOpenStudy = new System.Windows.Forms.Button();
+            this.btnPrelimReport = new System.Windows.Forms.Button();
+            this.btnSignReport = new System.Windows.Forms.Button();
             this.btnNotifyError = new System.Windows.Forms.Button();
             this.txtMRN = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -66,6 +71,9 @@
             this.txtLaunchUsername = new System.Windows.Forms.TextBox();
             this.btnLogin = new System.Windows.Forms.Button();
             this.tabConfiguration = new System.Windows.Forms.TabPage();
+            this.lblAuthToken = new System.Windows.Forms.Label();
+            this.txtAuthToken = new System.Windows.Forms.TextBox();
+            this.useAuthToken = new System.Windows.Forms.CheckBox();
             this.txtConfigTopic = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtConfigHubUrl = new System.Windows.Forms.TextBox();
@@ -77,6 +85,7 @@
             this.btnGetConfig = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabUpdateContent = new System.Windows.Forms.TabPage();
+            this.cbxIncludeCurrentContext = new System.Windows.Forms.CheckBox();
             this.btnLoadReference = new System.Windows.Forms.Button();
             this.btnDeleteContent = new System.Windows.Forms.Button();
             this.btnUpdateContent = new System.Windows.Forms.Button();
@@ -87,8 +96,6 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.btnOpenLogFolder = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.btnSignReport = new System.Windows.Forms.Button();
-            this.btnPrelimReport = new System.Windows.Forms.Button();
             this.tabUpdateStudies.SuspendLayout();
             this.tabReportOpenClose.SuspendLayout();
             this.tabSubscribe.SuspendLayout();
@@ -127,6 +134,16 @@
             this.btnCopy.Text = "Copy Log";
             this.btnCopy.UseVisualStyleBackColor = true;
             this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            // 
+            // buttonGetSubscriptions
+            // 
+            this.buttonGetSubscriptions.Location = new System.Drawing.Point(200, 88);
+            this.buttonGetSubscriptions.Name = "buttonGetSubscriptions";
+            this.buttonGetSubscriptions.Size = new System.Drawing.Size(101, 23);
+            this.buttonGetSubscriptions.TabIndex = 42;
+            this.buttonGetSubscriptions.Text = "Get Subscriptions";
+            this.ttAccession.SetToolTip(this.buttonGetSubscriptions, "Gets a list of subscriptions for the current topic");
+            this.buttonGetSubscriptions.Click += new System.EventHandler(this.buttonGetSubscriptions_Click);
             // 
             // tabUpdateStudies
             // 
@@ -196,6 +213,9 @@
             // 
             // tabReportOpenClose
             // 
+            this.tabReportOpenClose.Controls.Add(this.buttonGetSubscriptions);
+            this.tabReportOpenClose.Controls.Add(this.btnCloseStudy);
+            this.tabReportOpenClose.Controls.Add(this.btnOpenStudy);
             this.tabReportOpenClose.Controls.Add(this.btnPrelimReport);
             this.tabReportOpenClose.Controls.Add(this.btnSignReport);
             this.tabReportOpenClose.Controls.Add(this.btnNotifyError);
@@ -213,6 +233,42 @@
             this.tabReportOpenClose.TabIndex = 3;
             this.tabReportOpenClose.Text = "Actions";
             this.tabReportOpenClose.UseVisualStyleBackColor = true;
+            // 
+            // btnCloseStudy
+            // 
+            this.btnCloseStudy.Location = new System.Drawing.Point(279, 43);
+            this.btnCloseStudy.Name = "btnCloseStudy";
+            this.btnCloseStudy.Size = new System.Drawing.Size(85, 23);
+            this.btnCloseStudy.TabIndex = 41;
+            this.btnCloseStudy.Text = "Close Study";
+            this.btnCloseStudy.Click += new System.EventHandler(this.btnCloseStudy_Click);
+            // 
+            // btnOpenStudy
+            // 
+            this.btnOpenStudy.Location = new System.Drawing.Point(188, 43);
+            this.btnOpenStudy.Name = "btnOpenStudy";
+            this.btnOpenStudy.Size = new System.Drawing.Size(85, 23);
+            this.btnOpenStudy.TabIndex = 40;
+            this.btnOpenStudy.Text = "Open Study";
+            this.btnOpenStudy.Click += new System.EventHandler(this.btnOpenStudy_Click);
+            // 
+            // btnPrelimReport
+            // 
+            this.btnPrelimReport.Location = new System.Drawing.Point(461, 43);
+            this.btnPrelimReport.Name = "btnPrelimReport";
+            this.btnPrelimReport.Size = new System.Drawing.Size(85, 23);
+            this.btnPrelimReport.TabIndex = 39;
+            this.btnPrelimReport.Text = "Prelim Report";
+            this.btnPrelimReport.Click += new System.EventHandler(this.btnPrelimReport_Click);
+            // 
+            // btnSignReport
+            // 
+            this.btnSignReport.Location = new System.Drawing.Point(370, 43);
+            this.btnSignReport.Name = "btnSignReport";
+            this.btnSignReport.Size = new System.Drawing.Size(85, 23);
+            this.btnSignReport.TabIndex = 38;
+            this.btnSignReport.Text = "Sign Report";
+            this.btnSignReport.Click += new System.EventHandler(this.btnSignReport_Click);
             // 
             // btnNotifyError
             // 
@@ -283,7 +339,7 @@
             this.btnNotify.Click += new System.EventHandler(this.btnNotify_Click);
             // 
             // tabSubscribe
-            // 
+            this.btnUnsubscribe.Enabled = false;
             this.tabSubscribe.Controls.Add(this.txtLeaseSeconds);
             this.tabSubscribe.Controls.Add(this.label12);
             this.tabSubscribe.Controls.Add(this.btnUnsubscribe);
@@ -338,6 +394,7 @@
             this.txtHubUrl.ReadOnly = true;
             this.txtHubUrl.Size = new System.Drawing.Size(344, 20);
             this.txtHubUrl.TabIndex = 15;
+            this.txtHubUrl.Enabled = false;
             // 
             // label1
             // 
@@ -354,6 +411,7 @@
             this.txtTopic.Name = "txtTopic";
             this.txtTopic.Size = new System.Drawing.Size(478, 20);
             this.txtTopic.TabIndex = 17;
+            this.txtTopic.Enabled = false;
             // 
             // txtSubEvents
             // 
@@ -457,6 +515,9 @@
             // 
             // tabConfiguration
             // 
+            this.tabConfiguration.Controls.Add(this.lblAuthToken);
+            this.tabConfiguration.Controls.Add(this.txtAuthToken);
+            this.tabConfiguration.Controls.Add(this.useAuthToken);
             this.tabConfiguration.Controls.Add(this.txtConfigTopic);
             this.tabConfiguration.Controls.Add(this.label5);
             this.tabConfiguration.Controls.Add(this.txtConfigHubUrl);
@@ -474,18 +535,47 @@
             this.tabConfiguration.Text = "Configuration Data";
             this.tabConfiguration.UseVisualStyleBackColor = true;
             // 
+            // lblAuthToken
+            // 
+            this.lblAuthToken.AutoSize = true;
+            this.lblAuthToken.Location = new System.Drawing.Point(8, 92);
+            this.lblAuthToken.Name = "lblAuthToken";
+            this.lblAuthToken.Size = new System.Drawing.Size(117, 13);
+            this.lblAuthToken.TabIndex = 27;
+            this.lblAuthToken.Text = "Auth Token:                 ";
+            this.lblAuthToken.Visible = false;
+            // 
+            // txtAuthToken
+            // 
+            this.txtAuthToken.Enabled = false;
+            this.txtAuthToken.Location = new System.Drawing.Point(150, 92);
+            this.txtAuthToken.Name = "txtAuthToken";
+            this.txtAuthToken.Size = new System.Drawing.Size(533, 20);
+            this.txtAuthToken.TabIndex = 26;
+            this.txtAuthToken.Visible = false;
+            // 
+            // useAuthToken
+            // 
+            this.useAuthToken.AutoSize = true;
+            this.useAuthToken.Location = new System.Drawing.Point(150, 12);
+            this.useAuthToken.Name = "useAuthToken";
+            this.useAuthToken.Size = new System.Drawing.Size(143, 17);
+            this.useAuthToken.TabIndex = 25;
+            this.useAuthToken.Text = "Use Existing Auth Token";
+            this.useAuthToken.UseVisualStyleBackColor = true;
+            this.useAuthToken.CheckedChanged += new System.EventHandler(this.useAuthToken_CheckedChanged);
+            // 
             // txtConfigTopic
             // 
-            this.txtConfigTopic.Location = new System.Drawing.Point(150, 123);
+            this.txtConfigTopic.Location = new System.Drawing.Point(150, 66);
             this.txtConfigTopic.Name = "txtConfigTopic";
-            this.txtConfigTopic.ReadOnly = true;
             this.txtConfigTopic.Size = new System.Drawing.Size(533, 20);
             this.txtConfigTopic.TabIndex = 9;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(7, 126);
+            this.label5.Location = new System.Drawing.Point(7, 66);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(37, 13);
             this.label5.TabIndex = 24;
@@ -493,32 +583,29 @@
             // 
             // txtConfigHubUrl
             // 
-            this.txtConfigHubUrl.Location = new System.Drawing.Point(150, 95);
+            this.txtConfigHubUrl.Location = new System.Drawing.Point(150, 40);
             this.txtConfigHubUrl.Name = "txtConfigHubUrl";
-            this.txtConfigHubUrl.ReadOnly = true;
             this.txtConfigHubUrl.Size = new System.Drawing.Size(533, 20);
             this.txtConfigHubUrl.TabIndex = 7;
             // 
             // txtConfigTokenUrl
             // 
-            this.txtConfigTokenUrl.Location = new System.Drawing.Point(150, 66);
+            this.txtConfigTokenUrl.Location = new System.Drawing.Point(150, 118);
             this.txtConfigTokenUrl.Name = "txtConfigTokenUrl";
-            this.txtConfigTokenUrl.ReadOnly = true;
             this.txtConfigTokenUrl.Size = new System.Drawing.Size(533, 20);
             this.txtConfigTokenUrl.TabIndex = 5;
             // 
             // txtConfigAuthUrl
             // 
-            this.txtConfigAuthUrl.Location = new System.Drawing.Point(150, 37);
+            this.txtConfigAuthUrl.Location = new System.Drawing.Point(150, 92);
             this.txtConfigAuthUrl.Name = "txtConfigAuthUrl";
-            this.txtConfigAuthUrl.ReadOnly = true;
             this.txtConfigAuthUrl.Size = new System.Drawing.Size(533, 20);
             this.txtConfigAuthUrl.TabIndex = 3;
             // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 69);
+            this.label8.Location = new System.Drawing.Point(7, 118);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(88, 13);
             this.label8.TabIndex = 17;
@@ -527,7 +614,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(7, 98);
+            this.label7.Location = new System.Drawing.Point(7, 43);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(100, 13);
             this.label7.TabIndex = 16;
@@ -536,7 +623,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(7, 40);
+            this.label2.Location = new System.Drawing.Point(7, 92);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(118, 13);
             this.label2.TabIndex = 13;
@@ -569,6 +656,7 @@
             // 
             // tabUpdateContent
             // 
+            this.tabUpdateContent.Controls.Add(this.cbxIncludeCurrentContext);
             this.tabUpdateContent.Controls.Add(this.btnLoadReference);
             this.tabUpdateContent.Controls.Add(this.btnDeleteContent);
             this.tabUpdateContent.Controls.Add(this.btnUpdateContent);
@@ -583,10 +671,20 @@
             this.tabUpdateContent.Text = "Content";
             this.tabUpdateContent.UseVisualStyleBackColor = true;
             // 
+            // cbxIncludeCurrentContext
+            // 
+            this.cbxIncludeCurrentContext.AutoSize = true;
+            this.cbxIncludeCurrentContext.Location = new System.Drawing.Point(507, 12);
+            this.cbxIncludeCurrentContext.Name = "cbxIncludeCurrentContext";
+            this.cbxIncludeCurrentContext.Size = new System.Drawing.Size(137, 17);
+            this.cbxIncludeCurrentContext.TabIndex = 46;
+            this.cbxIncludeCurrentContext.Text = "Include Current Context";
+            this.cbxIncludeCurrentContext.UseVisualStyleBackColor = true;
+            // 
             // btnLoadReference
             // 
             this.btnLoadReference.Enabled = false;
-            this.btnLoadReference.Location = new System.Drawing.Point(507, 112);
+            this.btnLoadReference.Location = new System.Drawing.Point(507, 122);
             this.btnLoadReference.Name = "btnLoadReference";
             this.btnLoadReference.Size = new System.Drawing.Size(155, 23);
             this.btnLoadReference.TabIndex = 45;
@@ -597,7 +695,7 @@
             // btnDeleteContent
             // 
             this.btnDeleteContent.Enabled = false;
-            this.btnDeleteContent.Location = new System.Drawing.Point(507, 83);
+            this.btnDeleteContent.Location = new System.Drawing.Point(507, 93);
             this.btnDeleteContent.Name = "btnDeleteContent";
             this.btnDeleteContent.Size = new System.Drawing.Size(155, 23);
             this.btnDeleteContent.TabIndex = 44;
@@ -608,7 +706,7 @@
             // btnUpdateContent
             // 
             this.btnUpdateContent.Enabled = false;
-            this.btnUpdateContent.Location = new System.Drawing.Point(507, 54);
+            this.btnUpdateContent.Location = new System.Drawing.Point(507, 64);
             this.btnUpdateContent.Name = "btnUpdateContent";
             this.btnUpdateContent.Size = new System.Drawing.Size(155, 23);
             this.btnUpdateContent.TabIndex = 43;
@@ -618,7 +716,7 @@
             // 
             // btnAddContent
             // 
-            this.btnAddContent.Location = new System.Drawing.Point(507, 25);
+            this.btnAddContent.Location = new System.Drawing.Point(507, 35);
             this.btnAddContent.Name = "btnAddContent";
             this.btnAddContent.Size = new System.Drawing.Size(155, 23);
             this.btnAddContent.TabIndex = 41;
@@ -670,26 +768,6 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // btnSignReport
-            // 
-            this.btnSignReport.Location = new System.Drawing.Point(188, 43);
-            this.btnSignReport.Name = "btnSignReport";
-            this.btnSignReport.Size = new System.Drawing.Size(85, 23);
-            this.btnSignReport.TabIndex = 38;
-            this.btnSignReport.Text = "Sign Report";
-            this.btnSignReport.Click += new System.EventHandler(this.btnSignReport_Click);
-            this.btnSignReport.Visible = false;
-            // 
-            // btnPrelimReport
-            // 
-            this.btnPrelimReport.Location = new System.Drawing.Point(279, 43);
-            this.btnPrelimReport.Name = "btnPrelimReport";
-            this.btnPrelimReport.Size = new System.Drawing.Size(85, 23);
-            this.btnPrelimReport.TabIndex = 39;
-            this.btnPrelimReport.Text = "Prelim Report";
-            this.btnPrelimReport.Click += new System.EventHandler(this.btnPrelimReport_Click);
-            this.btnPrelimReport.Visible = false;
             // 
             // Form1
             // 
@@ -785,6 +863,13 @@
         private System.Windows.Forms.Button btnNotifyError;
         private System.Windows.Forms.Button btnSignReport;
         private System.Windows.Forms.Button btnPrelimReport;
+        private System.Windows.Forms.CheckBox cbxIncludeCurrentContext;
+        private System.Windows.Forms.Button btnCloseStudy;
+        private System.Windows.Forms.Button btnOpenStudy;
+        private System.Windows.Forms.Button buttonGetSubscriptions;
+        private System.Windows.Forms.CheckBox useAuthToken;
+        private System.Windows.Forms.TextBox txtAuthToken;
+        private System.Windows.Forms.Label lblAuthToken;
     }
 }
 
