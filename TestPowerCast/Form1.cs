@@ -35,7 +35,6 @@ namespace Nuance.PowerCast.TestPowerCast
         //private static readonly AutoResetEvent _launchCBEvent = new AutoResetEvent(false);
         private string _endpoint = null;
         private BackgroundWorker _webSocketReader;
-        private BackgroundWorker _callbackReader;
         private readonly static HttpListener _listener = new HttpListener();
         private string _accessToken = null;
         private readonly string _connectorUrl;
@@ -423,7 +422,7 @@ namespace Nuance.PowerCast.TestPowerCast
 
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!IsConfigurationAvailable() && 
+            if (!IsConfigurationAvailable() &&
                 (tabControl1.SelectedTab.Name != this.tabConfiguration.Name))
             {
                 tabControl1.SelectedIndex = 0;
@@ -449,7 +448,7 @@ namespace Nuance.PowerCast.TestPowerCast
         private void TabControl1_Deselecting(object sender, EventArgs e)
         {
             //If we are leaving the configuration tab, set the configuration values 
-            if(tabControl1.SelectedTab.Name == this.tabConfiguration.Name)
+            if (tabControl1.SelectedTab.Name == this.tabConfiguration.Name)
             {
                 if (_config == null)
                     _config = new ConfigurationData();
@@ -584,8 +583,8 @@ namespace Nuance.PowerCast.TestPowerCast
             string leaseSeconds = String.IsNullOrEmpty(txtLeaseSeconds.Text) ? "86400" : txtLeaseSeconds.Text;
             Dictionary<string, string> hub = new Dictionary<string, string>
             {
-                { "hub.channel.type", rbWebsocket.Checked ? "websocket" : "rest-hook" },
-                { "hub.callback", rbWebsocket.Checked ? "" : _subscribeCallbackUrl },
+                { "hub.channel.type", "websocket"},
+                { "hub.callback", ""},
                 { "hub.mode",  mode },
                 { "hub.topic", txtTopic.Text },
                 { "hub.events", txtSubEvents.Text },
@@ -593,17 +592,8 @@ namespace Nuance.PowerCast.TestPowerCast
                 { "hub.lease_seconds", leaseSeconds },
                 { "hub.subscriber", APPNAME }
             };
-            if (mode == "subscribe")
-            {
-                if (rbUseResthook.Checked)
-                {
-                    // set up callback reader before sending request
-                    _callbackReader = new BackgroundWorker();
-                    _callbackReader.DoWork += _callbackReader_DoWork;
-                    _callbackReader.RunWorkerAsync();
-                }
-            }
-            else
+
+            if (mode != "subscribe")
             {
                 hub.Add("hub.channel.endpoint", _endpoint);
             }
@@ -618,28 +608,20 @@ namespace Nuance.PowerCast.TestPowerCast
             {
                 if (mode == "unsubscribe")
                 {
-                    if (rbWebsocket.Checked)
+                    Display($"{btnSubscribe.Text} request was accepted. Closing web socket and terminating background thread.");
+                    try
                     {
-                        Display($"{btnSubscribe.Text} request was accepted. Closing web socket and terminating background thread.");
-                        try
-                        {
-                            await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
-                        }
-                        catch (Exception ex)
-                        {
-                            Display($"Exception occurred closing the websocket: {ex.Message}", LogEventLevel.Error);
-                        }
-                        finally
-                        {
-                            _ws.Dispose();
-                            _endpoint = null;
-                            Display("Disposed the websocket connection");
-                        }
+                        await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "client unsubscribing from topic", CancellationToken.None);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        _listener.Stop();
-                        _listener.Close();
+                        Display($"Exception occurred closing the websocket: {ex.Message}", LogEventLevel.Error);
+                    }
+                    finally
+                    {
+                        _ws.Dispose();
+                        _endpoint = null;
+                        Display("Disposed the websocket connection");
                     }
                 }
                 else // SUBSCRIBE
@@ -654,59 +636,57 @@ namespace Nuance.PowerCast.TestPowerCast
                         _currentContext = subResponse.contexts.Find(c => c.contextType == "DiagnosticReport");
                         UpdateListViews();
                     }
-                    if (rbWebsocket.Checked)
+
+                    _endpoint = subResponse.websocket_endpoint;
+                    Display($"Hub returned websocket URL: {_endpoint} and contexts:\r\n{JsonConvert.SerializeObject(subResponse.contexts, Formatting.Indented)}");
+                    // Connect to websocket
+                    try
                     {
-                        _endpoint = subResponse.websocket_endpoint;
-                        Display($"Hub returned websocket URL: {_endpoint} and contexts:\r\n{JsonConvert.SerializeObject(subResponse.contexts, Formatting.Indented)}");
-                        // Connect to websocket
-                        try
-                        {
-                            Display($"Connecting to Hub Websocket: {_endpoint}");
-                            _ws = new ClientWebSocket();
-                            await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
-                        }
-                        catch (Exception ex)
-                        {
-                            _ws.Dispose();
-                            MessageBox.Show(ex.ToString());
-                            return;
-                        }
-                        // read the intent verification
-                        Display("Expecting websocket verification. Waiting for response...");
-                        string socketData;
-                        try
-                        {
-                            socketData = await _webSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Normal to get a read error thrown here when socket is closed. We'll terminate quietly
-                            Display($"***** Error reading websocket intent verification: {ex.Message}.");
-                            return;
-                        }
-                        try
-                        {
-                            var sub = JsonConvert.DeserializeObject<Subscription>(socketData);
-                            if (sub.Topic == txtTopic.Text)
-                            {
-                                Display("Intent verification received. Success.");
-                            }
-                            else
-                            {
-                                Display("Intent verification failed.");
-                                return;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Display($"Exception parsing websocket intent verification: {ex.Message}.\r\n{socketData}");
-                            return;
-                        }
-                        // start the websocket reader background thread
-                        _webSocketReader = new BackgroundWorker();
-                        _webSocketReader.DoWork += webSocketReader_DoWork;
-                        _webSocketReader.RunWorkerAsync();
+                        Display($"Connecting to Hub Websocket: {_endpoint}");
+                        _ws = new ClientWebSocket();
+                        await _ws.ConnectAsync(new Uri(_endpoint), CancellationToken.None);
                     }
+                    catch (Exception ex)
+                    {
+                        _ws.Dispose();
+                        MessageBox.Show(ex.ToString());
+                        return;
+                    }
+                    // read the intent verification
+                    Display("Expecting websocket verification. Waiting for response...");
+                    string socketData;
+                    try
+                    {
+                        socketData = await _webSocketLib.ReceiveStringAsync(_ws, CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Normal to get a read error thrown here when socket is closed. We'll terminate quietly
+                        Display($"***** Error reading websocket intent verification: {ex.Message}.");
+                        return;
+                    }
+                    try
+                    {
+                        var sub = JsonConvert.DeserializeObject<Subscription>(socketData);
+                        if (sub.Topic == txtTopic.Text)
+                        {
+                            Display("Intent verification received. Success.");
+                        }
+                        else
+                        {
+                            Display("Intent verification failed.");
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Display($"Exception parsing websocket intent verification: {ex.Message}.\r\n{socketData}");
+                        return;
+                    }
+                    // start the websocket reader background thread
+                    _webSocketReader = new BackgroundWorker();
+                    _webSocketReader.DoWork += webSocketReader_DoWork;
+                    _webSocketReader.RunWorkerAsync();
                 }
             }
         }
@@ -1322,7 +1302,7 @@ namespace Nuance.PowerCast.TestPowerCast
                         return;
                     }
                 }
-                else 
+                else
                 {
                     sendUpdate = false;
                 }
