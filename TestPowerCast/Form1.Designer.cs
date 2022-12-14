@@ -62,8 +62,6 @@
             this.txtTopic = new System.Windows.Forms.TextBox();
             this.txtSubEvents = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.rbUseResthook = new System.Windows.Forms.RadioButton();
-            this.rbWebsocket = new System.Windows.Forms.RadioButton();
             this.label3 = new System.Windows.Forms.Label();
             this.btnSubscribe = new System.Windows.Forms.Button();
             this.tabLogin = new System.Windows.Forms.TabPage();
@@ -348,8 +346,6 @@
             this.tabSubscribe.Controls.Add(this.txtTopic);
             this.tabSubscribe.Controls.Add(this.txtSubEvents);
             this.tabSubscribe.Controls.Add(this.label4);
-            this.tabSubscribe.Controls.Add(this.rbUseResthook);
-            this.tabSubscribe.Controls.Add(this.rbWebsocket);
             this.tabSubscribe.Controls.Add(this.label3);
             this.tabSubscribe.Controls.Add(this.btnSubscribe);
             this.tabSubscribe.Location = new System.Drawing.Point(4, 22);
@@ -428,28 +424,6 @@
             this.label4.Size = new System.Drawing.Size(37, 13);
             this.label4.TabIndex = 13;
             this.label4.Text = "Topic:";
-            // 
-            // rbUseResthook
-            // 
-            this.rbUseResthook.AutoSize = true;
-            this.rbUseResthook.Location = new System.Drawing.Point(112, 101);
-            this.rbUseResthook.Name = "rbUseResthook";
-            this.rbUseResthook.Size = new System.Drawing.Size(96, 17);
-            this.rbUseResthook.TabIndex = 23;
-            this.rbUseResthook.Text = "Use Rest-hook";
-            this.rbUseResthook.UseVisualStyleBackColor = true;
-            // 
-            // rbWebsocket
-            // 
-            this.rbWebsocket.AutoSize = true;
-            this.rbWebsocket.Checked = true;
-            this.rbWebsocket.Location = new System.Drawing.Point(4, 101);
-            this.rbWebsocket.Name = "rbWebsocket";
-            this.rbWebsocket.Size = new System.Drawing.Size(102, 17);
-            this.rbWebsocket.TabIndex = 21;
-            this.rbWebsocket.TabStop = true;
-            this.rbWebsocket.Text = "Use Websocket";
-            this.rbWebsocket.UseVisualStyleBackColor = true;
             // 
             // label3
             // 
@@ -814,8 +788,6 @@
         private System.Windows.Forms.TextBox txtTopic;
         private System.Windows.Forms.TextBox txtSubEvents;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.RadioButton rbUseResthook;
-        private System.Windows.Forms.RadioButton rbWebsocket;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnSubscribe;
         private System.Windows.Forms.TabPage tabLogin;
