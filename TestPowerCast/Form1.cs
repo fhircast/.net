@@ -1080,9 +1080,11 @@ namespace Nuance.PowerCast.TestPowerCast
                 Entry = new List<Bundle.EntryComponent>()
             };
             ImagingStudy study = null;
+            string studyIdentifier = null;
             foreach (ListViewItem studyItem in lvStudies.CheckedItems)
             {
                 study = (ImagingStudy)studyItem.Tag;
+                studyIdentifier = study?.Identifier?.FirstOrDefault()?.Value;
                 break; // there should only be one because multiselect == false
             }
             Bundle.EntryComponent entry = new Bundle.EntryComponent
@@ -1107,6 +1109,12 @@ namespace Nuance.PowerCast.TestPowerCast
                     {
                         bundle = _fhirParser.Parse<Bundle>(sendForm.FinalJson);
                         bundle.Entry.First().Request.Method = verb; // make sure the user didn't change this
+                        var identifier = (bundle.Entry.First()?.Resource as ImagingStudy)?.Identifier?.FirstOrDefault()?.Value;
+                        if (!string.Equals(studyIdentifier, identifier, StringComparison.OrdinalIgnoreCase))
+                        {
+                            MessageBox.Show("Imaging Study identifier cannot be modified.", "Invalid Update");
+                            return;
+                        }
                     }
                     catch (Exception ex)
                     {
