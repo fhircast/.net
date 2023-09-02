@@ -296,6 +296,11 @@ namespace Nuance.PowerCast.Common
 			return _fhirParser.Parse<Observation>(JsonConvert.SerializeObject(resource));
 		}
 
+		public static Patient ToPatient(this object resource)
+		{
+			return _fhirParser.Parse<Patient>(JsonConvert.SerializeObject(resource));
+		}
+
 		public static DomainResource ToDomainResource(this object resource)
 		{
 			return _fhirParser.Parse<DomainResource>(JsonConvert.SerializeObject(resource));
