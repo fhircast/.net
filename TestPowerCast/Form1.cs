@@ -232,7 +232,45 @@ namespace Nuance.PowerCast.TestPowerCast
             }
         }
 
-        private DiagnosticReport CurrentContextualReport
+		private void UpdateAccessionNumber()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+
+			if (_currentContext != null)
+			{
+				List<ContextItem> items = _currentContext.context.FindAll(c => c.Key.ToLower() == "study");
+				foreach (ContextItem studyItem in items)
+				{
+					ImagingStudy study = studyItem.Resource.ToImagingStudy();
+					// Create three items and three sets of subitems for each item.
+					string singleAccession = GetAccessionNumber(study);
+					stringBuilder.Append(singleAccession);
+					stringBuilder.Append(" ,");
+				}
+			}
+
+			string accession = stringBuilder.ToString().TrimEnd(',').Trim();
+			Settings.Default.txtAccession = accession;
+			SetTextBox(txtAccession, accession);
+
+		}
+
+		private void UpdatePatientMRN()
+		{
+			string mrn = string.Empty;
+
+			if (_currentContext != null)
+			{
+				ContextItem item = _currentContext.context.FirstOrDefault(c => c.Key.ToLower() == "patient");
+				Patient patient = item?.Resource.ToPatient();
+				mrn = GetMRN(patient);
+			}
+
+			Settings.Default.txtMRN = mrn;
+			SetTextBox(txtMRN, mrn);
+		}
+
+		private DiagnosticReport CurrentContextualReport
         {
             get
             {
@@ -307,7 +345,29 @@ namespace Nuance.PowerCast.TestPowerCast
             return result;
         }
 
-        private void _callbackReader_DoWork(object sender, DoWorkEventArgs e)
+		private string GetMRN(Patient patient)
+		{
+			if (patient == null) return string.Empty;
+
+			string result = string.Empty;
+
+			foreach (Identifier i in patient.Identifier)
+			{
+				if (null != i.Type && null != i.Type.Coding)
+				{
+					foreach (Coding c in i.Type.Coding)
+					{
+						if (c.Code.ToLower() == "mr")
+						{
+							result = i.Value;
+						}
+					}
+				}
+			}
+			return result;
+		}
+
+		private void _callbackReader_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
@@ -622,7 +682,10 @@ namespace Nuance.PowerCast.TestPowerCast
                         _ws.Dispose();
                         _endpoint = null;
                         Display("Disposed the websocket connection");
-                    }
+                        UpdateListViews();
+						UpdateAccessionNumber();
+						UpdatePatientMRN();
+					}
                 }
                 else // SUBSCRIBE
                 {
@@ -635,7 +698,9 @@ namespace Nuance.PowerCast.TestPowerCast
                     {
                         _currentContext = subResponse.contexts.Find(c => c.contextType == "DiagnosticReport");
                         UpdateListViews();
-                    }
+						UpdateAccessionNumber();
+						UpdatePatientMRN();
+					}
 
                     _endpoint = subResponse.websocket_endpoint;
                     Display($"Hub returned websocket URL: {_endpoint} and contexts:\r\n{JsonConvert.SerializeObject(subResponse.contexts, Formatting.Indented)}");
@@ -912,7 +977,10 @@ namespace Nuance.PowerCast.TestPowerCast
                 _currentContext = contexts.Find(c => c.contextType == "DiagnosticReport");
             }
             UpdateListViews();
-            return true;
+			UpdateAccessionNumber();
+			UpdatePatientMRN();
+
+			return true;
         }
 
         /// <summary>
