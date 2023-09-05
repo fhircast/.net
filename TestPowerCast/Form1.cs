@@ -210,12 +210,12 @@ namespace Nuance.PowerCast.TestPowerCast
                     foreach (var entry in currentContentBundle.Entry)
                     {
                         entry.Resource.TryDeriveResourceType(out ResourceType resourceType);
-                        if (resourceType == ResourceType.Observation)
-                        {
+                        if ( (resourceType == ResourceType.Observation) || (resourceType == ResourceType.Media) )
+						{
                             ListViewItem item = new ListViewItem(entry.Resource.Id, 0);
                             item.Checked = false;
-                            item.SubItems.Add(entry.Resource.TypeName);
-                            item.Tag = new ContextItem { Resource = entry.Resource, Key = resourceType.ToString(), Reference = entry.FullUrl };
+							item.Tag = new ContextItem { Resource = entry.Resource, Key = resourceType.ToString(), Reference = entry.FullUrl };
+							item.SubItems.Add(entry.Resource.TypeName);
                             this.lvContent.Invoke((MethodInvoker)delegate
                             {
                                 lvContent.Items.Add(item);
@@ -1047,8 +1047,17 @@ namespace Nuance.PowerCast.TestPowerCast
                 object oTag = lvItem.Tag;
                 ContextItem context = (ContextItem)oTag;
                 ToggleButtonEnabled(btnLoadReference, (context.Reference != null));
-            }
-            else
+
+				string resourceType = context.Key;
+
+				if (resourceType.ToLower() == "media")
+				{
+					ToggleButtonEnabled(btnUpdateContent, false);
+					ToggleButtonEnabled(btnDeleteContent, false);
+					ToggleButtonEnabled(btnLoadReference, false);
+				}
+			}
+			else
             {
                 ToggleButtonEnabled(btnLoadReference, false);
             }
