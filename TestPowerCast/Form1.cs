@@ -1,12 +1,4 @@
-﻿using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Nuance.PowerCast.Common;
-using Nuance.PowerCast.TestPowerCast.Properties;
-using Serilog;
-using Serilog.Events;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -22,8 +14,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows.Forms;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Hl7.Fhir.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Nuance.PowerCast.Common;
+using Nuance.PowerCast.TestPowerCast.Properties;
+using Serilog;
+using Serilog.Events;
 using static Hl7.Fhir.Model.DiagnosticReport;
 using Subscription = Nuance.PowerCast.Common.Subscription;
+using ThreadingTasks = System.Threading.Tasks;
 
 namespace Nuance.PowerCast.TestPowerCast
 {
@@ -31,11 +33,13 @@ namespace Nuance.PowerCast.TestPowerCast
     {
         private ClientWebSocket _ws = null;
         private readonly WebSocketLib _webSocketLib = new WebSocketLib();
-        private readonly static HttpClient _httpClient = new HttpClient();
+		private static readonly HttpClient _httpClient = new HttpClient();
+
         //private static readonly AutoResetEvent _launchCBEvent = new AutoResetEvent(false);
         private string _endpoint = null;
+
         private BackgroundWorker _webSocketReader;
-        private readonly static HttpListener _listener = new HttpListener();
+        private static readonly HttpListener _listener = new HttpListener();
         private string _accessToken = null;
         private readonly string _connectorUrl;
         private readonly string _subscribeCallbackUrl;
@@ -51,8 +55,8 @@ namespace Nuance.PowerCast.TestPowerCast
         private JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
         private bool _isSubscribed = false;
 
-        const string APPNAME = "TestPowerCast";
-        const string HUB_SECRET = "SeCreT";
+        private const string APPNAME = "TestPowerCast";
+		private const string HUB_SECRET = "SeCreT";
 
         public Form1()
         {
@@ -100,7 +104,15 @@ namespace Nuance.PowerCast.TestPowerCast
             this.Text = $"{fileVersion.ProductName} ({fileVersion.FileVersion})";
         }
 
-        private async Task<string> GetToken()
+		private string AppNameWithGuid
+		{
+			get
+			{
+				return $"{APPNAME}-{Guid.NewGuid():N}";
+			}
+		}
+
+		private async Task<string> GetToken()
         {
             string token = null;
             HttpResponseMessage response;
@@ -115,18 +127,27 @@ namespace Nuance.PowerCast.TestPowerCast
             };
             FormUrlEncodedContent enc = new FormUrlEncodedContent(auth);
             request.Content = enc;
-            response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                Display($"Unable to obtain access token from Auth0: {(int)response.StatusCode} - {response.ReasonPhrase}", LogEventLevel.Error);
+                response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    string s = await response.Content.ReadAsStringAsync();
+                    var jwt = JObject.Parse(s);
+                    token = jwt["access_token"].ToString();
+                }
+                else
+                {
+                    Display($"Unable to obtain access token from Auth0: {(int)response.StatusCode} - {response.ReasonPhrase}", LogEventLevel.Error);
+                }
             }
-            else
-            {
-                string s = await response.Content.ReadAsStringAsync();
-                var jwt = JObject.Parse(s);
-                token = jwt["access_token"].ToString();
-            }
-            return token;
+			catch (Exception ex)
+			{
+				Display($"GetToken error: url = {urlBuilder.Uri}, message = {ex.Message} ", LogEventLevel.Error);
+				Log.Logger.Error(ex, $"Exception occurred: {ex.Message}, see log file for details.");
+			}
+
+			return token;
         }
 
         /// <summary>
@@ -172,7 +193,8 @@ namespace Nuance.PowerCast.TestPowerCast
                 }
             }
             Display("Websocket reader terminated.");
-        }
+			chkMultipleInstances.Invoke(new Action(() => chkMultipleInstances.Enabled = true));
+		}
 
         private void UpdateListViews()
         {
@@ -193,8 +215,10 @@ namespace Nuance.PowerCast.TestPowerCast
                 {
                     ImagingStudy study = studyItem.Resource.ToImagingStudy();
                     // Create three items and three sets of subitems for each item.
-                    ListViewItem item = new ListViewItem(GetAccessionNumber(study), 0);
-                    item.Checked = false;
+                    ListViewItem item = new ListViewItem(GetAccessionNumber(study), 0)
+                    {
+                        Checked = false
+                    };
                     item.SubItems.Add(study.Status == ImagingStudy.ImagingStudyStatus.Available ? "Comparison" : "Active");
                     item.SubItems.Add(study.Started);
                     item.Tag = study;
@@ -210,13 +234,33 @@ namespace Nuance.PowerCast.TestPowerCast
                     foreach (var entry in currentContentBundle.Entry)
                     {
                         entry.Resource.TryDeriveResourceType(out ResourceType resourceType);
-                        if ( (resourceType == ResourceType.Observation) || (resourceType == ResourceType.Media) )
+                        if ((resourceType == ResourceType.Observation) || (resourceType == ResourceType.Media))
 						{
-                            ListViewItem item = new ListViewItem(entry.Resource.Id, 0);
-                            item.Checked = false;
-							item.Tag = new ContextItem { Resource = entry.Resource, Key = resourceType.ToString(), Reference = entry.FullUrl };
+							ListViewItem item = new ListViewItem(entry.Resource.Id, 0)
+							{
+								Checked = false,
+								Tag = new ContextItem { Resource = entry.Resource, Key = resourceType.ToString(), Reference = entry.FullUrl }
+							};
 							item.SubItems.Add(entry.Resource.TypeName);
-                            this.lvContent.Invoke((MethodInvoker)delegate
+
+							if (resourceType == ResourceType.Observation)
+							{
+								// Observation -> Device
+								Observation observation = entry.Resource as Observation;
+								if ((observation.Device != null) && (observation.Contained?.Count() > 0))
+								{
+									Device device = (Device)observation.Contained.FirstOrDefault(o => o is Device);
+									if (device != null)
+									{
+										item.SubItems.Add(device.Id ?? string.Empty);
+										item.SubItems.Add(device.Manufacturer ?? string.Empty);
+										item.SubItems.Add((device.DeviceName?.Count > 0) ? (device.DeviceName.First().Name ?? string.Empty) : string.Empty);
+										item.SubItems.Add(device.Status.HasValue ? device.Status.ToString() : string.Empty);
+									}
+								}
+							} // Observation
+
+							this.lvContent.Invoke((MethodInvoker)delegate
                             {
                                 lvContent.Items.Add(item);
                             });
@@ -226,8 +270,10 @@ namespace Nuance.PowerCast.TestPowerCast
                     if (lvContent.Items == null || (lvContent.Items.Count <= 0))
                     {
                         ToggleButtonEnabled(btnUpdateContent, false);
-                        ToggleButtonEnabled(btnDeleteContent, false);
-                    }
+                        ToggleButtonEnabled(btnDeleteContent, false); 
+                        ToggleButtonEnabled(btnAddObservationDevice, false);
+						ToggleButtonEnabled(btnDeleteDevice, false);
+					}
                 }
             }
         }
@@ -252,7 +298,6 @@ namespace Nuance.PowerCast.TestPowerCast
 			string accession = stringBuilder.ToString().TrimEnd(',').Trim();
 			Settings.Default.txtAccession = accession;
 			SetTextBox(txtAccession, accession);
-
 		}
 
 		private void UpdatePatientMRN()
@@ -274,9 +319,9 @@ namespace Nuance.PowerCast.TestPowerCast
         {
             get
             {
-                return (null == _currentContext ? null : _currentContext.context.Find(c => c.Key.ToLower() == "report").Resource).ToDiagnosticReport();
-            }
-        }
+				return (_currentContext?.context.Find(c => c.Key.ToLower() == "report").Resource).ToDiagnosticReport();
+			}
+		}
 
         private ImagingStudy CurrentContextualStudy
         {
@@ -324,9 +369,15 @@ namespace Nuance.PowerCast.TestPowerCast
             // Width of -2 indicates auto-size.
             lvContent.Columns.Add("Resource Id", -2, HorizontalAlignment.Left);
             lvContent.Columns.Add("Resource Type", -2, HorizontalAlignment.Left);
-        }
+			lvContent.Columns.Add("Device Id", -2, HorizontalAlignment.Left);
+			lvContent.Columns.Add("Device Manufacturer", -2, HorizontalAlignment.Left);
+			lvContent.Columns.Add("Device Name", -2, HorizontalAlignment.Left);
+			lvContent.Columns.Add("Device Status", -2, HorizontalAlignment.Left);
+		}
 
-        private string GetAccessionNumber(ImagingStudy study)
+		#region Fetch and Validation
+
+		private string GetAccessionNumber(ImagingStudy study)
         {
             string result = null;
             foreach (Identifier i in study.Identifier)
@@ -366,6 +417,44 @@ namespace Nuance.PowerCast.TestPowerCast
 			}
 			return result;
 		}
+
+		private Tuple<bool, string> ValidateResourceType(Resource resource, params ResourceType[] validResourceTypes)
+		{
+			string bundleResourceType = resource?.TypeName;
+
+			if (bundleResourceType != null)
+			{
+				ResourceType.TryParse(bundleResourceType, out ResourceType resourceType);
+
+				if (validResourceTypes.Contains(resourceType))
+				{
+					return new Tuple<bool, string>(true, string.Empty);
+				}
+				else
+				{
+					return new Tuple<bool, string>(false, $"Resource type {bundleResourceType} is not valid for this operation.");
+				}
+			}
+			else
+			{
+				return new Tuple<bool, string>(false, $"Invalid Resource type.");
+			}
+		}
+
+		private Tuple<bool, string> ValidateResourceType(Bundle bundle, params ResourceType[] validResourceTypes)
+		{
+			Resource resource = bundle?.Entry?.FirstOrDefault()?.Resource;
+			if (resource != null)
+			{
+				return ValidateResourceType(resource, validResourceTypes);
+			}
+			else
+			{
+				return new Tuple<bool, string>(false, $"Invalid Resource type.");
+			}
+		}
+
+		#endregion Fetch and Validation
 
 		private void _callbackReader_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -477,7 +566,7 @@ namespace Nuance.PowerCast.TestPowerCast
             {
                 txtLog.AppendText(DateTime.Now.ToString("G") + "\t" + message + "\r\n");
             }
-            Log.Logger.Write((Serilog.Events.LogEventLevel)level, message);
+            Log.Logger.Write((LogEventLevel)level, message);
         }
 
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -553,16 +642,24 @@ namespace Nuance.PowerCast.TestPowerCast
         private async Task<HttpResponseMessage> SendAuthorizedRequest(HttpRequestMessage request)
         {
             HttpResponseMessage response = new HttpResponseMessage();
+
             if (null == _accessToken)
                 _accessToken = await GetToken();
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this._accessToken);
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
             try
             {
                 response = await _httpClient.SendAsync(request);
             }
             catch (Exception ex)
             {
-                Display($"Exception calling web request {request}.  Message: {ex.Message}");
+				// Remove Authorization header to remove token information
+				if (request?.Headers?.Authorization != null)
+				{
+					request.Headers.Authorization = null;
+				}
+
+				Display($"Exception calling web request {request}.  Message: {ex.Message}");
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 response.ReasonPhrase = ex.Message;
             }
@@ -579,7 +676,7 @@ namespace Nuance.PowerCast.TestPowerCast
             else if (response.StatusCode == HttpStatusCode.Conflict)
             {
                 var errMsg = await response.Content?.ReadAsStringAsync();
-                var conflictMessage = $"Received 409 response. There was a conflit, use GetContext to get the latest context version. {errMsg}";
+                var conflictMessage = $"Received 409 response. There was a conflict, use GetContext to get the latest context version. {errMsg}";
                 Display(conflictMessage, LogEventLevel.Error);
                 MessageBox.Show(conflictMessage);
             }
@@ -590,14 +687,10 @@ namespace Nuance.PowerCast.TestPowerCast
                 if (!String.IsNullOrEmpty(responseContent))
                 {
                     var responseObject = new Object();
-                    try { responseObject = JsonConvert.DeserializeObject(responseContent); }
+                    try { responseObject = JsonConvert.DeserializeObject<object>(responseContent); }
                     catch { }
-                    message = String.Format("The request was not accepted by the PowerCast Hub. Error code: {0} Reason: {1}", response.StatusCode, ((JObject)responseObject)["message"]);
                 }
-                else
-                {
-                    message = String.Format("The request was not accepted by the PowerCast Hub. Error code: {0}", response.StatusCode);
-                }
+                message = String.Format("The request was not accepted by the PowerCast Hub. Error code: {0}", response.StatusCode);
                 Display(message);
             }
             return response;
@@ -611,7 +704,8 @@ namespace Nuance.PowerCast.TestPowerCast
             _isSubscribed = false;
             this.btnUnsubscribe.Enabled = false;
             this.btnSubscribe.Enabled = true;
-        }
+			chkMultipleInstances.Enabled = true;
+		}
 
         private void btnSubscribe_Click(object sender, EventArgs e)
         {
@@ -626,7 +720,8 @@ namespace Nuance.PowerCast.TestPowerCast
             _isSubscribed = true;
             this.btnSubscribe.Enabled = false;
             this.btnUnsubscribe.Enabled = true;
-        }
+			chkMultipleInstances.Enabled = false;
+		}
 
         private async void SendSubscribe(string mode)
         {
@@ -636,12 +731,13 @@ namespace Nuance.PowerCast.TestPowerCast
             // save subscription parameters
             Settings.Default.txtSubEvents = txtSubEvents.Text;
             Settings.Default.Save();
-            HttpResponseMessage response;
             //Subscribe/Unsubscribe
             UriBuilder uriBuilder = new UriBuilder($"{txtHubUrl.Text}");
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uriBuilder.Uri);
-            string leaseSeconds = String.IsNullOrEmpty(txtLeaseSeconds.Text) ? "86400" : txtLeaseSeconds.Text;
-            Dictionary<string, string> hub = new Dictionary<string, string>
+            
+            string leaseSeconds = String.IsNullOrWhiteSpace(txtLeaseSeconds.Text) ? "86400" : txtLeaseSeconds.Text;
+			string appName = !chkMultipleInstances.Checked ? APPNAME : AppNameWithGuid;
+			Dictionary<string, string> hub = new Dictionary<string, string>
             {
                 { "hub.channel.type", "websocket"},
                 { "hub.callback", ""},
@@ -650,16 +746,17 @@ namespace Nuance.PowerCast.TestPowerCast
                 { "hub.events", txtSubEvents.Text },
                 { "hub.secret", HUB_SECRET },
                 { "hub.lease_seconds", leaseSeconds },
-                { "hub.subscriber", APPNAME }
+                { "hub.subscriber", appName }
             };
 
             if (mode != "subscribe")
             {
                 hub.Add("hub.channel.endpoint", _endpoint);
             }
+
             FormUrlEncodedContent enc = new FormUrlEncodedContent(hub);
             request.Content = enc;
-            response = await SendAuthorizedRequest(request);
+            var response = await SendAuthorizedRequest(request);
             if (!response.IsSuccessStatusCode)
             {
                 Display($"{btnSubscribe.Text} request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}", LogEventLevel.Error);
@@ -679,7 +776,8 @@ namespace Nuance.PowerCast.TestPowerCast
                     }
                     finally
                     {
-                        _ws.Dispose();
+						chkMultipleInstances.Invoke(new Action(() => chkMultipleInstances.Enabled = true));
+						_ws.Dispose();
                         _endpoint = null;
                         Display("Disposed the websocket connection");
                         UpdateListViews();
@@ -733,6 +831,7 @@ namespace Nuance.PowerCast.TestPowerCast
                     try
                     {
                         var sub = JsonConvert.DeserializeObject<Subscription>(socketData);
+
                         if (sub.Topic == txtTopic.Text)
                         {
                             Display("Intent verification received. Success.");
@@ -834,7 +933,7 @@ namespace Nuance.PowerCast.TestPowerCast
             Notification notification = new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = addReportContext ? "DiagnosticReport-open" : "ImagingStudy-open",
@@ -878,13 +977,15 @@ namespace Nuance.PowerCast.TestPowerCast
                     Display($"Exception occurred getting configuration data: {ex.Message} See log file for details.");
                     Log.Error(ex, "Exception attempting to get configuration data from Connector.");
                 }
-            }
+				ResetConfiguration();
+			}
             if (null != response)
             {
                 if (!response.IsSuccessStatusCode)
                 {
                     Display($"***** The request to get configuration data was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
-                }
+					ResetConfiguration();
+				}
                 else
                 {
                     Display("Configuration data received.");
@@ -960,22 +1061,30 @@ namespace Nuance.PowerCast.TestPowerCast
                 if (!response.IsSuccessStatusCode)
                 {
                     Display($"PowerCast GetTopic request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                    return false;
                 }
-            }
+				string contextJson = await response.Content.ReadAsStringAsync();
+				var contexts = JsonConvert.DeserializeObject<List<HubContext>>(contextJson);
+				if (null == contexts || contexts.Count == 0)
+				{
+					_currentContext = null;
+				}
+				else
+				{
+					_currentContext = contexts.Find(c => c.contextType == "DiagnosticReport");
+				}
+			}
             catch (Exception ex)
             {
-                Display($"Exception connecting to the hub: {hubUrl} \r\nRequest: {request} \r\nException: {ex.Message}");
+				// Remove Authorization header to remove token information
+				if (request?.Headers?.Authorization != null)
+				{
+					request.Headers.Authorization = null;
+				}
+
+				Display($"Exception connecting to the hub: {hubUrl} \r\nRequest: {request} \r\nException: {ex.Message}");
             }
-            string contextJson = await response.Content.ReadAsStringAsync();
-            var contexts = JsonConvert.DeserializeObject<List<HubContext>>(contextJson);
-            if (null == contexts || contexts.Count == 0)
-            {
-                _currentContext = null;
-            }
-            else
-            {
-                _currentContext = contexts.Find(c => c.contextType == "DiagnosticReport");
-            }
+
             UpdateListViews();
 			UpdateAccessionNumber();
 			UpdatePatientMRN();
@@ -1039,9 +1148,11 @@ namespace Nuance.PowerCast.TestPowerCast
             bool itemChecked = lvContent.CheckedIndices.Count > 0;
             ToggleButtonEnabled(btnUpdateContent, itemChecked);
             ToggleButtonEnabled(btnDeleteContent, itemChecked);
+			ToggleButtonEnabled(btnAddObservationDevice, itemChecked);
+			ToggleButtonEnabled(btnDeleteDevice, itemChecked);
 
-            // if the selected item has a reference to the resource, enable the "load references button"
-            if (itemChecked)
+			// if the selected item has a reference to the resource, enable the "load references button"
+			if (itemChecked)
             {
                 ListViewItem lvItem = lvContent.Items[lvContent.CheckedIndices[0]];
                 object oTag = lvItem.Tag;
@@ -1054,6 +1165,8 @@ namespace Nuance.PowerCast.TestPowerCast
 				{
 					ToggleButtonEnabled(btnUpdateContent, false);
 					ToggleButtonEnabled(btnDeleteContent, false);
+					ToggleButtonEnabled(btnAddObservationDevice, false);
+					ToggleButtonEnabled(btnDeleteDevice, false);
 					ToggleButtonEnabled(btnLoadReference, false);
 				}
 			}
@@ -1097,7 +1210,7 @@ namespace Nuance.PowerCast.TestPowerCast
                 Notification notification = new Notification
                 {
                     Timestamp = DateTime.Now,
-                    Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                    Id = AppNameWithGuid,
                     Event = new NotificationEvent()
                     {
                         HubEvent = "DiagnosticReport-update",
@@ -1204,7 +1317,7 @@ namespace Nuance.PowerCast.TestPowerCast
             Notification notification = new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = "DiagnosticReport-update",
@@ -1262,7 +1375,14 @@ namespace Nuance.PowerCast.TestPowerCast
                     try
                     {
                         bundle = _fhirParser.Parse<Bundle>(sendForm.FinalJson);
-                    }
+
+						Tuple<bool, string> isResourceTypeValid = ValidateResourceType(bundle, ResourceType.Observation, ResourceType.Media);
+						if (!isResourceTypeValid.Item1)
+						{
+							MessageBox.Show(this, isResourceTypeValid.Item2);
+							return;
+						}
+					}
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Error parsing Bundle Json: {ex.Message}");
@@ -1271,7 +1391,7 @@ namespace Nuance.PowerCast.TestPowerCast
                     Notification notification = new Notification
                     {
                         Timestamp = DateTime.Now,
-                        Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                        Id = AppNameWithGuid,
                         Event = new NotificationEvent()
                         {
                             HubEvent = "DiagnosticReport-update",
@@ -1366,11 +1486,14 @@ namespace Nuance.PowerCast.TestPowerCast
                 case "observation":
                     entry.Resource = _fhirParser.Parse<Observation>(JsonConvert.SerializeObject(resource));
                     break;
+
                 case "media":
                     entry.Resource = _fhirParser.Parse<Media>(JsonConvert.SerializeObject(resource));
                     break;
             }
+
             bundle.Entry.Add(entry);
+
             if (verb == Bundle.HTTPVerb.PUT)
             {
                 var sendForm = new SendForm(_fhirSerializer.SerializeToString(bundle));
@@ -1380,6 +1503,21 @@ namespace Nuance.PowerCast.TestPowerCast
                     try
                     {
                         bundle = _fhirParser.Parse<Bundle>(sendForm.FinalJson);
+
+                        // Validating Device under Observation
+                        if (bundle?.Entry?.FirstOrDefault(o => o.Resource is Observation) != null)
+                        {
+                            Observation observation = bundle.Entry[0].Resource as Observation;
+
+                            Tuple<bool, string> validateObservation = ValidateAndUpdateObservation(observation);
+                            if (!validateObservation.Item1)
+                            {
+                                MessageBox.Show(this, validateObservation.Item2, "Device", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+
+                            bundle.Entry[0].Resource = observation;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -1398,7 +1536,7 @@ namespace Nuance.PowerCast.TestPowerCast
                 Notification notification = new Notification
                 {
                     Timestamp = DateTime.Now,
-                    Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                    Id = AppNameWithGuid,
                     Event = new NotificationEvent()
                     {
                         HubEvent = "DiagnosticReport-update",
@@ -1450,7 +1588,7 @@ namespace Nuance.PowerCast.TestPowerCast
             Notification notification = new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = "userlogout",
@@ -1551,7 +1689,7 @@ namespace Nuance.PowerCast.TestPowerCast
             return new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = "syncerror",
@@ -1572,7 +1710,7 @@ namespace Nuance.PowerCast.TestPowerCast
             Notification notification = new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = "DiagnosticReport-close",
@@ -1605,7 +1743,7 @@ namespace Nuance.PowerCast.TestPowerCast
             Notification notification = new Notification
             {
                 Timestamp = DateTime.Now,
-                Id = $"{APPNAME}-{Guid.NewGuid():N}",
+                Id = AppNameWithGuid,
                 Event = new NotificationEvent()
                 {
                     HubEvent = "ImagingStudy-close",
@@ -1626,9 +1764,9 @@ namespace Nuance.PowerCast.TestPowerCast
             _ = SendNotification(notification, null);
         }
 
-        #endregion
+		#endregion UI Event Handlers
 
-        private void ResetTopic()
+		private void ResetTopic()
         {
             if (_config != null)
                 _config.topic = null;
@@ -1637,27 +1775,49 @@ namespace Nuance.PowerCast.TestPowerCast
             Display($"Resetting topic from configuration.");
         }
 
-        private bool IsConfigurationAvailable()
+		/// <summary>
+		/// resets the configuration data and clears the input text boxes
+		/// </summary>
+		private void ResetConfiguration()
+		{
+			try
+			{
+				if (_config != null)
+				{
+					_config.authorization_endpoint = null;
+					_config.token_endpoint = null;
+					_config.hub_endpoint = null;
+					_config.topic = null;
+				}
+				SetTextBox(txtConfigAuthUrl);
+				SetTextBox(txtConfigTokenUrl);
+				SetTextBox(txtConfigHubUrl);
+				SetTextBox(txtConfigTopic);
+				Display($"Configuration values were reset.");
+			}
+			catch (Exception ex)
+			{
+				Display($"Exception occurred while resetting configuration: {ex.Message}");
+				Log.Logger.Error(ex, "Exception occurred while resetting configuration.");
+			}
+		}
+
+		private bool IsConfigurationAvailable()
         {
-            var configAvailable = _config != null &&
-                !(string.IsNullOrEmpty(_config.topic) ||
-                string.IsNullOrEmpty(_config.hub_endpoint));
+			var configAvailable = false;
 
-            if (!configAvailable)
-                return false;
+			if (!string.IsNullOrWhiteSpace(_config?.topic) && !string.IsNullOrWhiteSpace(_config?.hub_endpoint))
+			{
+				configAvailable = _authTokenOptionChecked
+					? !string.IsNullOrWhiteSpace(_accessToken)
+					: !string.IsNullOrWhiteSpace(_config.authorization_endpoint) && !string.IsNullOrWhiteSpace(_config.token_endpoint);
+			}
 
-            if (!_authTokenOptionChecked)
-            {
-                configAvailable = !(string.IsNullOrEmpty(_config.authorization_endpoint) ||
-                    string.IsNullOrEmpty(_config.token_endpoint));
-            }
-            else if (string.IsNullOrWhiteSpace(_accessToken))
-            {
-                return false;
-            }
+			if (!configAvailable)
+				Display("Invalid configuration data. Please check config tab.");
 
-            return configAvailable;
-        }
+			return configAvailable;
+		}
 
         /// <summary>
         /// Set TextBox values thread safe
@@ -1666,7 +1826,7 @@ namespace Nuance.PowerCast.TestPowerCast
         /// <param name="value"></param>
         public void SetTextBox(TextBox textBox, string value = null)
         {
-            if (textBox.InvokeRequired == true)
+            if (textBox.InvokeRequired)
             {
                 Action safeWrite = delegate { SetTextBox(textBox, value); };
                 textBox.BeginInvoke(safeWrite);
@@ -1684,7 +1844,7 @@ namespace Nuance.PowerCast.TestPowerCast
         /// <param name="value"></param>
         public void ToggleButtonEnabled(Button button, bool value)
         {
-            if (button.InvokeRequired == true)
+            if (button.InvokeRequired)
             {
                 Action safeWrite = delegate { ToggleButtonEnabled(button, value); };
                 button.BeginInvoke(safeWrite);
@@ -1719,8 +1879,8 @@ namespace Nuance.PowerCast.TestPowerCast
                         Key = "report",
                         Resource = new DiagnosticReport()
                         {
-                            Id= CurrentContextualReport.Id,
-                            Meta = CurrentContextualReport.Meta
+                            Id= CurrentContextualReport?.Id,
+                            Meta = CurrentContextualReport?.Meta
                         }
                     },
                     new ContextItem()
@@ -1786,5 +1946,281 @@ namespace Nuance.PowerCast.TestPowerCast
             this.txtAuthToken.Enabled = _authTokenOptionChecked;
             this.lblAuthToken.Visible = _authTokenOptionChecked;
         }
-    }
+
+
+		#region Device
+
+		private void PrefillOpenFileDialog(System.Windows.Forms.OpenFileDialog openFileDialog, bool multiSelect)
+		{
+			if (openFileDialog == null) return;
+
+			openFileDialog.InitialDirectory = $"{Directory.GetCurrentDirectory()}\\content";
+			openFileDialog.Filter = "Json File|*.json|Text File|*.txt";
+			openFileDialog.DefaultExt = "json";
+			openFileDialog.Title = "Json File";
+			openFileDialog.FileName = "";
+			openFileDialog.Multiselect = multiSelect;
+		}
+
+		private Device GenerateDevice(List<string> fileNames)
+		{
+			Device device = null;
+			string errorMsg = string.Empty;
+
+			try
+			{
+				var filename = fileNames.First();
+				string currentResourceJson = File.ReadAllText(filename);
+
+				//Check if we encountered a jarray, if so add each resource from the array to our bundle
+				var resourceJToken = JToken.Parse(currentResourceJson);
+				if (resourceJToken is JArray)
+				{
+					if (!resourceJToken.Any())
+					{
+						errorMsg = "There is no device defined in JSON. Please add one device.";
+					}
+					else if (resourceJToken.Count() > 1)
+					{
+						errorMsg = "Only one device can be added at a time. Multiple devices are defined in JSON.";
+					}
+					else
+					{
+						var resourceArray = resourceJToken as JArray;
+						var currentResource = resourceArray.Children().First();
+						device = _fhirParser.Parse<Device>(currentResource.ToString());
+					}
+				}
+				else
+				{
+					//Just one device in the file so parse and add it to collection
+					device = _fhirParser.Parse<Device>(currentResourceJson);
+				}
+			}
+			catch (Exception ex)
+			{
+				errorMsg = $"Error parsing Json: {ex.Message}";
+			}
+
+			if (!string.IsNullOrEmpty(errorMsg))
+			{
+				MessageBox.Show(this, errorMsg);
+			}
+
+			return device;
+		}
+
+		private Tuple<bool, string> ValidateAndUpdateObservation(Observation observation)
+		{
+			if (observation == null) return Tuple.Create(true, string.Empty);
+
+			Resource device = null;
+
+			// Extracting Device from JSON
+			if (observation.Contained?.Count > 0)
+			{
+				device = observation.Contained.FirstOrDefault(o => o.TypeName.ToLower().Equals("device"));
+			}
+
+			// No device object in Contained array -> Clear out Device reference id
+			if ((observation.Device != null) && (device == null))
+			{
+				observation.Device = null;
+			}
+			// Device reference is null
+			// -> don't send any device object in Contained array
+			else if ((observation.Device == null) && (device != null))
+			{
+				observation.Contained.Remove(device);
+			}
+			// Device reference id does not match Device Id
+			// -> don't send any device object in Contained array
+			else if ((device != null) && (observation?.Device?.Reference != null))
+			{
+				var reference = new ResourceIdentity(observation.Device.Reference);
+
+				if (!reference.Id.Equals(device.Id))
+				{
+					observation.Contained.Remove(device);
+					return Tuple.Create(false, "Invalid Data: Device Id in Device reference and Contained array object do not match.");
+				}
+			}
+
+			return Tuple.Create(true, string.Empty);
+		}
+
+		private async void SendNotificationUpdateObservationDevice(Observation observation)
+		{
+			DiagnosticReport currentReport = CurrentContextualReport;
+
+			List<Bundle.EntryComponent> entries = new List<Bundle.EntryComponent>
+			{
+				new Bundle.EntryComponent
+				{
+					Request = new Bundle.RequestComponent()
+					{
+						Method = Bundle.HTTPVerb.PUT
+					},
+					Resource = observation
+				}
+			};
+
+			Notification notification = new Notification
+			{
+				Timestamp = DateTime.Now,
+				Id = AppNameWithGuid,
+				Event = new NotificationEvent()
+				{
+					HubEvent = "DiagnosticReport-update",
+					Topic = _config.topic,
+					Context = new List<ContextItem>
+					{
+						new ContextItem()
+						{
+							Key = "report",
+							Resource = new DiagnosticReport
+							{
+								Id = currentReport?.Id,
+								Meta = currentReport?.Meta
+							}
+						},
+						new ContextItem()
+						{
+							Key = "content",
+							Resource = new Bundle
+							{
+								Id = Guid.NewGuid().ToString("N"),
+								Type = Bundle.BundleType.Transaction,
+								Entry = entries
+							}
+						}
+					}
+				}
+			};
+			SetContextVersion(notification);
+			// send the notification event to the hub
+			var response = await SendNotification(notification);
+			if (!response.IsSuccessStatusCode)
+			{
+				Display($"Error sending notification: {(int)response.StatusCode} - {response.ReasonPhrase}", LogEventLevel.Error);
+			}
+		}
+
+		private void btnAddObservationDevice_Click(object sender, EventArgs e)
+		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show(this, "There is no report opened in PowerScribe.", "Device");
+				return;
+			}
+			if (lvContent.Items.Count == 0)
+			{
+				MessageBox.Show(this, "There are no observations in the report.", "Device");
+				return;
+			}
+			else if (lvContent.CheckedItems.Count == 0)
+			{
+				MessageBox.Show(this, "Please check an observation.", "Device");
+				return;
+			}
+
+			ContextItem context = (ContextItem)(lvContent.CheckedItems[0].Tag);
+			object observationResource = context.Resource;
+			Observation observation = _fhirParser.Parse<Observation>(JsonConvert.SerializeObject(observationResource));
+			if (observation.Device != null)
+			{
+				MessageBox.Show(this, "The selected observation already has a device.", "Device");
+				return;
+			}
+			// open file(s) containing json FHIR resources
+			PrefillOpenFileDialog(this.openFileDialog1, false);
+			if (openFileDialog1.ShowDialog() != DialogResult.OK) return;
+
+			//Read the json from the selected files and insert it into a bundle.
+			var device = GenerateDevice(openFileDialog1.FileNames.ToList());
+			if (device == null) return;
+
+			var sendForm = new SendForm(_fhirSerializer.SerializeToString(device));
+			DialogResult result = sendForm.ShowDialog();
+			if (result != DialogResult.OK) return;
+
+			try
+			{
+				device = _fhirParser.Parse<Device>(sendForm.FinalJson);
+
+				Tuple<bool, string> isResourceTypeValid = ValidateResourceType(device, ResourceType.Device);
+				if (!isResourceTypeValid.Item1)
+				{
+					MessageBox.Show(this, isResourceTypeValid.Item2, "Device");
+					return;
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, $"Error parsing Device Json: {ex.Message}", "Device");
+				return;
+			}
+
+			// Update the Device reference within the Observation.
+			observation.Device = new ResourceReference
+			{
+				Reference = $"#{device.Id}"
+			};
+
+			// Adding Device under Observation's Contained array.
+			if (observation.Contained == null)
+			{
+				observation.Contained = new List<Resource>();
+			}
+			observation.Contained.Add(device);
+
+			SendNotificationUpdateObservationDevice(observation);
+		}
+
+		private void btnDeleteDevice_Click(object sender, EventArgs e)
+		{
+			if (null == _currentContext)
+			{
+				MessageBox.Show(this, "There is no report opened in PowerScribe.", "Device");
+				return;
+			}
+			if (lvContent.Items.Count == 0)
+			{
+				MessageBox.Show(this, "There are no observations in the report.", "Device");
+				return;
+			}
+			else if (lvContent.CheckedItems.Count == 0)
+			{
+				MessageBox.Show(this, "Please check an observation.", "Device");
+				return;
+			}
+
+			ContextItem context = (ContextItem)(lvContent.CheckedItems[0].Tag);
+			object observationResource = context.Resource;
+			Observation observation = _fhirParser.Parse<Observation>(JsonConvert.SerializeObject(observationResource));
+			if (observation.Device == null)
+			{
+				MessageBox.Show(this, "The selected observation does not have a device.", "Device");
+				return;
+			}
+
+			// Update the Device reference to null within the Observation.
+			observation.Device = new ResourceReference
+			{
+				Reference = null
+			};
+
+			// Removing Device from Observation's Contained array.
+			if (observation.Contained?.Count > 0)
+			{
+				Resource device = observation.Contained.FirstOrDefault(o => o.TypeName.ToLower().Equals("device"));
+
+				observation.Contained.Remove(device);
+			}
+
+			SendNotificationUpdateObservationDevice(observation);
+		}
+
+		#endregion Device
+	}
 }

@@ -1,0 +1,46 @@
+{
+  "resourceType": "Observation",
+  "component": [
+
+  ],
+  "category": [
+
+  ],
+  "code": {
+    "coding": [
+      {
+        "code": "Syn_Calcification",
+        "system": "http://powercast.test.com"
+      }
+    ]
+  },
+  "valueString": "156.15 mm in instance 3 series 124",
+  "id": "25b7fc3ef91843a685d5d6def4865ec1",
+  "note": [
+    {
+      "text": "Seen on series 124 instance 3 with 92.5% probability."
+    }
+  ],
+  "issued": null,
+  "status": "final",
+  "contained": [
+    {
+      "resourceType": "Device",
+      "id": "f001",
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: f001</p><p><b>identifier</b>: 12345</p><p><b>status</b>: active</p></div>"
+      },
+      "identifier": [
+        {
+          "system": "http:/goodhealthhospital/identifier/devices",
+          "value": "12345"
+        }
+      ],
+      "status": "active"
+    }
+  ],
+  "device": {
+    "reference": "#f001"
+  }
+}

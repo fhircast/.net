@@ -1,0 +1,45 @@
+{
+  "resourceType": "Observation",
+  "component": [
+
+  ],
+  "category": [
+
+  ],
+  "code": {
+    "coding": [
+      {
+        "code": "Syn_Calcification",
+        "system": "http://powercast.test.com"
+      }
+    ]
+  },
+  "valueString": "156.15 mm in instance 3 series 124",
+  "id": "25b7fc3ef91843a685d5d6def4865ec1",
+  "note": [
+    {
+      "text": "Seen on series 124 instance 3 with 92.5% probability."
+    }
+  ],
+  "issued": null,
+  "status": "final",
+  "contained": [
+    {
+      "resourceType": "Device",
+      "id": "example",
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource &quot;example&quot; </p></div><p><b>identifier</b>: id: 345675</p></div>"
+      },
+      "identifier": [
+        {
+          "system": "http://goodcare.org/devices/id",
+          "value": "345675"
+        }
+      ]
+    }
+  ],
+  "device": {
+    "reference": "#example"
+  }
+}
