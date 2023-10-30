@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
 			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.txtLog = new System.Windows.Forms.TextBox();
 			this.btnClear = new System.Windows.Forms.Button();
 			this.btnCopy = new System.Windows.Forms.Button();
@@ -831,6 +832,7 @@
 			this.Controls.Add(this.btnCopy);
 			this.Controls.Add(this.btnClear);
 			this.Controls.Add(this.txtLog);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "Form1";
 			this.Text = "Test PowerCast";
 			this.Load += new System.EventHandler(this.Form1_Load);
