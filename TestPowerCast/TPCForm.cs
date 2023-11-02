@@ -29,7 +29,7 @@ using ThreadingTasks = System.Threading.Tasks;
 
 namespace Nuance.PowerCast.TestPowerCast
 {
-    public partial class Form1 : Form
+    public partial class TPCForm : Form
     {
         private ClientWebSocket _ws = null;
         private readonly WebSocketLib _webSocketLib = new WebSocketLib();
@@ -58,7 +58,7 @@ namespace Nuance.PowerCast.TestPowerCast
         private const string APPNAME = "TestPowerCast";
 		private const string HUB_SECRET = "SeCreT";
 
-        public Form1()
+        public TPCForm()
         {
             // put version info in title
             FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
@@ -93,7 +93,7 @@ namespace Nuance.PowerCast.TestPowerCast
             InitListViews();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void TPCForm_Load(object sender, EventArgs e)
         {
             txtSubEvents.Text = Settings.Default.txtSubEvents;
             txtAccession.Text = Settings.Default.txtAccession;
