@@ -94,11 +94,11 @@
       <DependentUpon>AddStudyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Common.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="TPCForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="TPCForm.Designer.cs">
+      <DependentUpon>TPCForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ImageForm.cs">
       <SubType>Form</SubType>
@@ -117,8 +117,8 @@
     <EmbeddedResource Include="AddStudyForm.resx">
       <DependentUpon>AddStudyForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="TPCForm.resx">
+      <DependentUpon>TPCForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ImageForm.resx">
       <DependentUpon>ImageForm.cs</DependentUpon>
