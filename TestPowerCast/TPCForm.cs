@@ -25,7 +25,6 @@ using Serilog;
 using Serilog.Events;
 using static Hl7.Fhir.Model.DiagnosticReport;
 using Subscription = Nuance.PowerCast.Common.Subscription;
-using ThreadingTasks = System.Threading.Tasks;
 
 namespace Nuance.PowerCast.TestPowerCast
 {
@@ -1002,30 +1001,6 @@ namespace Nuance.PowerCast.TestPowerCast
             }
         }
 
-        private async void btnLogin_Click(object sender, EventArgs e)
-        {
-            Display("Logging in to PowerScribe...");
-            HttpResponseMessage response;
-            UriBuilder urlBuilder = new UriBuilder($"{_connectorUrl}/login?username={txtLaunchUsername.Text}");
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
-            response = await SendAuthorizedRequest(request);
-            if (!response.IsSuccessStatusCode)
-            {
-                Display($"***** The login request was not accepted: {(int)response.StatusCode} - {response.ReasonPhrase}");
-            }
-            else
-            {
-                string configJson = await response.Content.ReadAsStringAsync();
-                _config = JsonConvert.DeserializeObject<ConfigurationData>(configJson);
-                txtConfigAuthUrl.Text = _config.authorization_endpoint;
-                txtConfigHubUrl.Text = _config.hub_endpoint;
-                txtConfigTokenUrl.Text = _config.token_endpoint;
-                txtConfigTopic.Text = _config.topic;
-                txtTopic.Text = _config.topic;
-                Display($"Login completed. Using topic {_config.topic}.");
-            }
-        }
-
         private void btnCloseReport_Click(object sender, EventArgs e)
         {
             SendCloseNotification(DiagnosticReportStatus.Partial);
@@ -1571,33 +1546,6 @@ namespace Nuance.PowerCast.TestPowerCast
             UpdateContent(Bundle.HTTPVerb.DELETE);
         }
 
-        private void btnUserLogout_Click(object sender, EventArgs e)
-        {
-            if (!IsConfigurationAvailable())
-            {
-                return;
-            }
-            else if (_ws == null || _ws.State != WebSocketState.Open)
-            {
-                //handle edge case if user click logout after getting topic but before subscribing
-                ResetTopic();
-                return;
-            }
-
-            // send userLogout event
-            Notification notification = new Notification
-            {
-                Timestamp = DateTime.Now,
-                Id = AppNameWithGuid,
-                Event = new NotificationEvent()
-                {
-                    HubEvent = "userlogout",
-                    Topic = _config.topic,
-                    Context = new List<ContextItem>()
-                }
-            };
-            _ = SendNotification(notification);
-        }
         private async void btnLoadReference_Click(object sender, EventArgs e)
         {
             ContextItem item = ((ContextItem)lvContent.Items[lvContent.CheckedIndices[0]].Tag);
